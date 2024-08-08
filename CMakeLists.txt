@@ -27,7 +27,7 @@ if(ENABLE_UNIT_TESTS)
     file(GLOB_RECURSE SRC_TEST "${CMAKE_CURRENT_SOURCE_DIR}/Test/*.cpp")
     add_executable(unitTest ${SRC_CORE} ${SRC_TEST})
 
-    target_link_libraries(unitTest gtest gtest_main)
+    target_link_libraries(unitTest gtest gtest_main brotlienc brotlidec)
 
     include(GoogleTest)
     gtest_discover_tests(unitTest)
