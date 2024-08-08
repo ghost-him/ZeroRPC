@@ -6,8 +6,13 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 file(GLOB_RECURSE SRC_CORE "${CMAKE_CURRENT_SOURCE_DIR}/Core/*.cpp")
+file(GLOB_RECURSE SRC_COMMON "${CMAKE_CURRENT_SOURCE_DIR}/Common/*.cpp")
+file(GLOB_RECURSE SRC_COMMON "${CMAKE_CURRENT_SOURCE_DIR}/Common/*.hpp")
 
-option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
+include_directories(Common)
+include_directories(Core)
+
+set(ENABLE_UNIT_TESTS ON CACHE INTERNAL "Enable unit tests")
 message(STATUS "Enable testing: ${ENABLE_UNIT_TESTS}")
 if(ENABLE_UNIT_TESTS)
     include(FetchContent)
@@ -29,7 +34,7 @@ if(ENABLE_UNIT_TESTS)
 
 else()
     # 添加可执行文件
-    add_executable(ZeroRPC ${SRC_CORE})
+    add_executable(ZeroRPC ${SRC_CORE} ${SRC_COMMON})
 
 
 endif ()

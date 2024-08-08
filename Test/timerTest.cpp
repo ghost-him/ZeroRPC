@@ -6,14 +6,8 @@
 #include <thread>
 #include "gtest/gtest.h"
 
-void defaultTimerFunction (std::function<void()> func) {
-    func();
-    std::cout << "执行了一次"<< std::endl;
-}
-
 TEST(TimerTest, act1) {
     Timer timer;
-    timer.setExecutor(defaultTimerFunction);
 
     auto id1 = timer.setPeriodicTimer([](){
         std::cout << "过了5秒" << std::endl;

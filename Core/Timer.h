@@ -34,6 +34,7 @@ private:
         }
     };
 public:
+    Timer(std::function<void(std::function<void()>)> executor = nullptr);
 
     uint64_t setTimeoutTimer(std::function<void()> func, std::chrono::milliseconds waitTime);
 

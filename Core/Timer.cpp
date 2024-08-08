@@ -78,3 +78,13 @@ void Timer::setExecutor(std::function<void(std::function<void()>)> executor) {
     this->_executor = std::move(executor);
 }
 
+Timer::Timer(std::function<void(std::function<void()>)> executor) {
+    if (executor != nullptr) {
+        this->_executor = std::move(executor);
+        return ;
+    }
+    this->_executor = [](std::function<void()> func) -> void {
+        func();
+    };
+}
+
