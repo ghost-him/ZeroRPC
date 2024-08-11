@@ -7,5 +7,8 @@ public:
         static T stance;
         return stance;
     }
+    Singleton(const Singleton&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+protected:
+    Singleton() = default;
 };
-

@@ -10,11 +10,14 @@ file(GLOB_RECURSE SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/Common/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/Common/*.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/Maintain/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/RPC/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/RPC/*.hpp"
 )
 file(GLOB_RECURSE INC
         "${CMAKE_CURRENT_SOURCE_DIR}/Core/*.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/Common/*.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/Maintain/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/RPC/*.h"
 )
 
 set(ENABLE_UNIT_TESTS ON CACHE INTERNAL "Enable unit tests")
@@ -32,7 +35,7 @@ if(ENABLE_UNIT_TESTS)
     file(GLOB_RECURSE SRC_TEST "${CMAKE_CURRENT_SOURCE_DIR}/Test/*.cpp")
     add_executable(unitTest ${SRC} ${INC} ${SRC_TEST})
 
-    target_link_libraries(unitTest gtest gtest_main brotlienc brotlidec)
+    target_link_libraries(unitTest gtest gtest_main brotlienc brotlidec uuid)
 
     include(GoogleTest)
     gtest_discover_tests(unitTest)
@@ -40,7 +43,7 @@ if(ENABLE_UNIT_TESTS)
 else()
     # 添加可执行文件
     add_executable(ZeroRPC ${SRC} ${INC})
-    target_link_libraries(unitTest brotlienc brotlidec)
+    target_link_libraries(unitTest brotlienc brotlidec uuid)
 
 endif ()
 
