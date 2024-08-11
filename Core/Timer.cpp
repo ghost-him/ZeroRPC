@@ -4,7 +4,7 @@
 
 #include "Timer.h"
 
-void Timer::Handler::createTimer(uint64_t id,
+void Handler::createTimer(uint64_t id,
                  const std::chrono::high_resolution_clock::time_point& createTime,
                  std::chrono::milliseconds waitTime,
                  bool isPeriodic,
@@ -19,18 +19,18 @@ void Timer::Handler::createTimer(uint64_t id,
     this->nextTime = lastTime + milliseconds;
 }
 
-void Timer::Handler::updateTimer() {
+void Handler::updateTimer() {
     this->lastTime = this->nextTime;
     this->nextTime = lastTime + waitTime;
 }
 
 
 uint64_t Timer::setTimeoutTimer(std::function<void()> func, std::chrono::milliseconds waitTime) {
-    return createTimer(std::move(func), waitTime, false);
+    return createTimer(func, waitTime, false);
 }
 
 uint64_t Timer::setPeriodicTimer(std::function<void()> func, std::chrono::milliseconds waitTime) {
-    return createTimer(std::move(func), waitTime, true);
+    return createTimer(func, waitTime, true);
 }
 
 void Timer::removeTimer(uint64_t id) {
@@ -41,20 +41,23 @@ void Timer::removeTimer(uint64_t id) {
 void Timer::run() {
     std::lock_guard<std::mutex> guard{_timerLock};
     auto nowTime {std::chrono::high_resolution_clock::now()};
-    while(nowTime >= _timers.top().nextTime) {
-        auto timer {_timers.top()};
-        _timers.pop();
+    if (!_timers.empty()) {
+        while(!_timers.empty() && nowTime >= _timers.top().nextTime) {
+            auto timer {_timers.top()};
+            _timers.pop();
 
-        if (_removedTimerID.contains(timer.id)) {
-            continue;
-        }
+            if (_removedTimerID.contains(timer.id)) {
+                continue;
+            }
 
-        _executor(timer.callbackFunction);
-        if (timer.isPeriodic) {
-            timer.updateTimer();
-            _timers.push(timer);
+            _executor(timer.callbackFunction);
+            if (timer.isPeriodic) {
+                timer.updateTimer();
+                _timers.push(timer);
+            }
         }
     }
+
 }
 
 uint64_t Timer::getTimerID() {
@@ -67,8 +70,8 @@ uint64_t Timer::createTimer(std::function<void()> func, std::chrono::millisecond
     handler.createTimer(id,
                         std::chrono::high_resolution_clock::now(),
                         waitTime,
-                        true,
-                        std::move(func));
+                        isPeriodic,
+                        func);
     std::lock_guard<std::mutex> guard{_timerLock};
     _timers.push(std::move(handler));
     return id;

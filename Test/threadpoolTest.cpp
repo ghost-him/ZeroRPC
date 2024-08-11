@@ -1,4 +1,3 @@
-#pragma once
 
 #include "../Core/ThreadPool.h"
 #include "../Maintain/ThreadPoolMonitor.hpp"

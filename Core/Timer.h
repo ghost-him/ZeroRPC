@@ -11,28 +11,30 @@
 #include <unordered_set>
 
 
+struct Handler {
+    uint64_t id {0};
+    std::function<void()> callbackFunction;
+    std::chrono::high_resolution_clock::time_point lastTime;
+    std::chrono::high_resolution_clock::time_point nextTime;
+    std::chrono::milliseconds waitTime {0};
+    bool isPeriodic {false};
+
+    void createTimer(uint64_t id,
+                     const std::chrono::high_resolution_clock::time_point& createTime,
+                     std::chrono::milliseconds waitTime,
+                     bool isPeriodic,
+                     std::function<void()> callbackFunction);
+
+    void updateTimer();
+
+    bool operator<(const Handler& other) const {
+        return nextTime > other.nextTime;
+    }
+};
+
 class Timer{
 private:
-    struct Handler {
-        uint64_t id {0};
-        std::function<void()> callbackFunction;
-        std::chrono::high_resolution_clock::time_point lastTime;
-        std::chrono::high_resolution_clock::time_point nextTime;
-        std::chrono::milliseconds waitTime {0};
-        bool isPeriodic {false};
 
-        void createTimer(uint64_t id,
-                         const std::chrono::high_resolution_clock::time_point& createTime,
-                         std::chrono::milliseconds waitTime,
-                         bool isPeriodic,
-                         std::function<void()> callbackFunction);
-
-        void updateTimer();
-
-        bool operator<(const Handler& other) const {
-            return nextTime > other.nextTime;
-        }
-    };
 public:
     Timer(std::function<void(std::function<void()>)> executor = nullptr);
 

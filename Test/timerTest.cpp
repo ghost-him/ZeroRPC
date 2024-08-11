@@ -34,3 +34,37 @@ TEST(TimerTest, act1) {
     }
 
 }
+
+TEST(TimerTest, testTimeoutAction) {
+    Timer timer;
+    timer.setTimeoutTimer([](){
+        std::cerr << "过了1s" << std::endl;
+    }, std::chrono::seconds(1));
+    while(true) {
+        timer.run();
+    }
+}
+
+TEST(TimerTest, testPeriodicAction) {
+    Timer timer;
+    timer.setPeriodicTimer([](){
+        std::cerr << "过了1s" << std::endl;
+    }, std::chrono::seconds(1));
+    while(true) {
+        timer.run();
+    }
+}
+
+TEST(TimerTest, handleTest) {
+    Handler handler;
+
+    std::function<void()> func = [](){
+        std::cout << "测试函数" << std::endl;
+    };
+
+    handler.createTimer(1,
+                        std::chrono::high_resolution_clock ::now(),
+                        std::chrono::seconds(3),
+                        false,
+                        func);
+}
