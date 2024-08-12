@@ -28,4 +28,8 @@
 
 服务端使用`reactor-ms`模式实现，并且二者都可以连接线程池，通过线程池来完成多线程的处理。
 
+## 序列化与反序列化
 
+该类是在b站上一个类改过来的。原代码：https://www.bilibili.com/video/BV1ad4y1x7VY
+
+我使用了模板重载了部分的代码，同时还使用了c++20中的概念（concept）来限制了支持的类型。同时还添加了`unordered_map`与`unordered_set`的支持。
