@@ -3,14 +3,21 @@
 //
 #include "gtest/gtest.h"
 #include "../RPC/RpcServer.h"
+#include "../RPC/FunctionHandler.hpp"
+
 
 int add(int a, int b) {
     return a + b;
 }
 
+std::string append(std::string a, std::string b) {
+    return a + b;
+}
+
 TEST (RpcServerTest, initTest) {
     RpcServer server(23333);
-    server.resigterMethod("add", add);
+    server.registerMethod("add", add);
+    server.registerMethod("append", append);
     server.run();
 }
 
@@ -22,57 +29,28 @@ int add2(int a, int b) {
 
 TEST (RpcServerTest, executeTimeConsumingTask) {
     RpcServer server(23333);
-    server.resigterMethod("add", add2);
+    server.registerMethod("add", add2);
     server.run();
 }
 
-class myClass {
+class myClass :public enable_serializable {
 public:
     int a, b;
-
     myClass operator+(const myClass& other) const {
-        myClass ret {
-            .a = this->a + other.a,
-            .b = this->b + other.b,
-        };
+        myClass ret;
+        ret.a = this->a + other.a;
+        ret.b = this->b + other.b;
         return ret;
     }
-
-
+    SERIALIZE(a, b)
 };
-namespace nlohmann {
-    template <>
-    struct adl_serializer<myClass> {
-        static void to_json(json& j, const myClass& s) {
-            j = json{{"a", s.a}, {"b", s.b}};
-        }
 
-        static void from_json(const json& j, myClass& s) {
-            j.at("a").get_to(s.a);
-            j.at("b").get_to(s.b);
-        }
-    };
-}
 myClass add3(myClass a, myClass b) {
     return a + b;
 }
 
 TEST (RpcServerTest, customClass) {
     RpcServer server(23333);
-    server.resigterMethod("add3", add3);
+    server.registerMethod("add3", add3);
     server.run();
 }
-
-/*
- * 无法调用无返回值的函数
- *
-void print(int a) {
-    std::cerr << a << std::endl;
-}
-
-TEST (RpcServerTest, noRetFunc) {
-    RpcServer server(23333);
-    server.resigterMethod("noret", print);
-}
-
- */

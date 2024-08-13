@@ -16,7 +16,7 @@ void DataStream::write_memory(const char* data, uint32_t len) {
     std::memcpy(&_buf[size], data, len);
 }
 
-void DataStream::reserve(uint32_t len) {
+void DataStream::reserve(int32_t len) {
     auto size {_buf.size()};
     auto cap {_buf.capacity()};
 
@@ -88,7 +88,7 @@ void DataStream::write(double value) {
     write_memory(reinterpret_cast<char *>(&value), sizeof(double));
 }
 
-void DataStream::write(std::string_view data) {
+void DataStream::write(const std::string&  data) {
     char type {DataType::STRING};
     write_memory(&type, sizeof(char));
     write(static_cast<int32_t>(data.size()));
@@ -204,12 +204,26 @@ bool DataStream::read_memory(char *data, uint32_t len) {
     return true;
 }
 
-DataStream &DataStream::operator<<(std::string_view value) {
-    write(std::string_view(value));
+DataStream &DataStream::operator<<(const char* value) {
+    write(value);
     return *this;
 }
-
+/*
 DataStream &DataStream::operator>>(std::string &value) {
     read(value);
     return *this;
+}
+*/
+const std::vector<char> &DataStream::data() const {
+    return _buf;
+}
+
+void DataStream::write(const char *value) {
+    write({value, strlen(value)});
+}
+
+void DataStream::load(std::string_view data) {
+    reserve(data.size());
+    std::memcpy(_buf.data(), data.data(), data.size());
+    _pos = 0;
 }

@@ -13,8 +13,11 @@ RpcClient::RpcClient(std::string_view host, uint16_t port)
     });
 
     _tcpClient.setReadMessageCallback([this](SocketChannelPtr channel, DataPtr data){
-        json j_response = json::parse(data->data(), data->data() + data->size());
-        RPCResponse response = j_response;
+        DataStream response_buf;
+        response_buf.load({(char*)data->data(), data->size()});
+
+        RPCResponse response;
+        response_buf >> response;
 
         std::lock_guard<std::mutex> lock(_hash_lock);
         auto it = _pending_request.find(response.id);

@@ -8,47 +8,24 @@
 #include "../Core/ThreadPool.h"
 #include <unordered_map>
 #include "RpcPackage.h"
-#include "FunctionTraits.hpp"
+#include "FunctionHandler.hpp"
 
 class RpcServer {
 public:
     RpcServer(int port);
 
-    template<typename Func>
-    void resigterMethod(std::string_view name, Func&& method);
+    template<typename Ret, typename... Args>
+    void registerMethod(std::string_view name, Ret(*func)(Args...));
 
     void run();
 
 private:
     ThreadPool* _threadPool;
-    std::unordered_map<std::string, RpcMethod> _methods;
+    HandlerManager _manager;
     TcpServer _server;
-
-    template<typename Func, typename... Args, std::size_t... I>
-    static json invoke_helper(Func&& f, const json& params, std::index_sequence<I...>) {
-        return json(std::invoke(std::forward<Func>(f), params[I].get<std::decay_t<Args>>()...));
-    }
-
-    template<typename Func, typename Indices = std::make_index_sequence<function_traits<std::decay_t<Func>>::arity>>
-    static json invoke(Func&& f, const json& params) {
-        return invoke_impl(std::forward<Func>(f), params, Indices{});
-    }
-
-    template<typename Func, std::size_t... I>
-    static json invoke_impl(Func&& f, const json& params, std::index_sequence<I...>) {
-        using traits = function_traits<std::decay_t<Func>>;
-        return invoke_helper<Func, typename traits::template argument<I>::type...>
-                (std::forward<Func>(f), params, std::index_sequence<I...>{});
-    }
-
-
-
 };
 
-template<typename Func>
-void RpcServer::resigterMethod(std::string_view name, Func&& method) {
-    _methods[std::string(name)] = [this, method = std::forward<Func>(method)](const json& params) {
-        return invoke(method, params);
-    };
+template<typename Ret, typename... Args>
+void RpcServer::registerMethod(std::string_view name, Ret(*func)(Args...)) {
+    _manager.registerHandler(name, func);
 }
-

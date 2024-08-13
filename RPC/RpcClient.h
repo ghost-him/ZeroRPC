@@ -14,8 +14,8 @@ class RpcClient {
 public:
     RpcClient(std::string_view host, uint16_t port);
 
-    template<typename... Args>
-    json call(const std::string& method, Args&&... args);
+    template<typename Ret, typename... Args>
+    Ret call(const std::string& method, Args&&... args);
 
     void run();
 
@@ -24,26 +24,33 @@ private:
     TcpClient _tcpClient;
 
     std::mutex _hash_lock;
-    std::unordered_map<std::string, std::promise<json>> _pending_request;
+    std::unordered_map<std::string, std::promise<DataStream>> _pending_request;
 
 };
 
-template<typename... Args>
-json RpcClient::call(const std::string &method, Args&&... args) {
+template<typename Ret, typename... Args>
+Ret RpcClient::call(const std::string &method, Args&&... args) {
     RPCRequest request;
     request.method = method;
-    request.params = json::array({std::forward<Args>(args)...});
+    DataStream ds;
+    ds.write_args(args...);
+    request.params = ds;
     request.id = generate_uuid();
 
-    json json_request = request;
+    DataStream request_buf;
+    request_buf << request;
 
-    std::promise<json> response_promise;
+    std::promise<DataStream> response_promise;
     auto future = response_promise.get_future();
     {
         std::unique_lock<std::mutex> guard{_hash_lock};
         _pending_request[request.id] = std::move(response_promise);
     }
 
-    _tcpClient.sendMessage(json_request.dump());
-    return future.get();
+    _tcpClient.sendMessage({request_buf.data().data(), request_buf.data().size()});
+
+    DataStream result_buf = future.get();
+    Ret result;
+    result_buf >> result;
+    return result;
 }

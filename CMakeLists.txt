@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(MyProject CXX)
+project(ZeroRPC CXX)
 
 # 启用C++20标准,这是使用模块所必需的
 set(CMAKE_CXX_STANDARD 20)

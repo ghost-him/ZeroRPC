@@ -22,6 +22,16 @@ TEST(DataStreamTest, testInit) {
     ASSERT_EQ(d1, d2);
 }
 
+TEST(DataStreamTest, testPlainText) {
+    DataStream ds;
+    const char* str = "hello";
+    ds << str;
+    std::string b;
+    ds >> b;
+    ASSERT_EQ(std::string(str), b);
+
+}
+
 TEST(DataStreamTest, testVec) {
     DataStream ds;
     std::vector<std::string> a1, a2;
@@ -105,4 +115,21 @@ TEST(DataStreamTest, testUnorderedContainer2) {
     ds << a;
     ds >> b;
     ASSERT_EQ(a, b);
+}
+
+template<typename ...Args>
+DataStream test(Args ... args) {
+    DataStream ds;
+    ds.write_args(args...);
+
+    return ds;
+}
+
+TEST(DataStreamTest, testSelf) {
+    DataStream ds = test("hello", true, false, 'c', 5);
+    auto& c = ds.data();
+    std::cout << c.size()<< std::endl;
+    for (int i = 0; i < c.size(); i ++) {
+        std::cout << c[i];
+    }
 }

@@ -14,6 +14,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
+#include <tuple>
 
 /*
     SupportedDataTypes
@@ -38,7 +39,9 @@ concept PrimitiveType  =
         std::is_same_v<T, int64_t> ||
         std::is_same_v<T, float> ||
         std::is_same_v<T, double> ||
-        std::is_same_v<T, std::string>;
+        std::is_same_v<T, std::string> ||
+        std::is_same_v<T, const char *> ||
+        std::is_same_v<std::remove_const_t<std::remove_extent_t<T>>, char>;
 
 template<typename T>
 concept AtomicType = UserDefinedType<T> || PrimitiveType<T>;
@@ -55,7 +58,7 @@ concept CompositeType =
 template<typename T>
 concept SupportedDataTypes = AtomicType<T> || CompositeType<T>;
 
-class DataStream {
+class DataStream : public enable_serializable {
 public:
     enum DataType {
         BOOL = 0,
@@ -113,7 +116,8 @@ public:
     void write(int64_t value);
     void write(float value);
     void write(double value);
-    void write(std::string_view data);
+    void write(const char* value);
+    void write(const std::string& data);
     void write(const enable_serializable& value);
 
     template <SupportedDataTypes T>
@@ -140,18 +144,43 @@ public:
     template<SupportedDataTypes T>
     DataStream & operator << (const T& value);
 
-    DataStream & operator<<(std::string_view value);
+    DataStream & operator<<(const char* value);
 
     template<SupportedDataTypes T>
     DataStream & operator >> (T& value);
 
-    DataStream & operator >> (std::string& value);
+    //DataStream & operator >> (std::string& value);
+
+    [[nodiscard]] const std::vector<char>& data() const;
+
+    template<SupportedDataTypes... Args>
+    std::tuple<Args...> get_args();
+
+    void load(std::string_view data);
+
+    SERIALIZE(is_big_endian, _buf, _pos)
+
 private:
-    void reserve(uint32_t len);
+    template<SupportedDataTypes T>
+    T get();
+
+    void reserve(int32_t len);
     bool is_big_endian;
     std::vector<char> _buf;
-    uint32_t _pos;
+    int32_t _pos;
 };
+
+template<SupportedDataTypes... Args>
+std::tuple<Args...> DataStream::get_args() {
+    return std::tuple<Args...>(get<Args>()...);
+}
+
+template<SupportedDataTypes T>
+T DataStream::get() {
+    T value;
+    read(value);
+    return value;
+}
 
 template<SupportedDataTypes T>
 DataStream &DataStream::operator<<(const T& value) {
