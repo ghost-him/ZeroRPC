@@ -36,3 +36,7 @@ void RpcClient::run() {
     _tcpClient.run();
 }
 
+void RpcClient::set_compress_algo(CompressionType type) {
+    this->_compressionType = type;
+}
+

@@ -7,7 +7,7 @@
 #include <brotli/decode.h>
 #include <stdexcept>
 
-std::vector<std::byte> Brotli::compress(const std::vector<std::byte> &data) {
+std::vector<std::byte> Brotli::compress(const std::span<const std::byte> &data) {
     size_t max_compressed_size = BrotliEncoderMaxCompressedSize(data.size());
     std::vector<std::byte> compressed(max_compressed_size);
     size_t encoded_size = max_compressed_size;
@@ -29,7 +29,7 @@ std::vector<std::byte> Brotli::compress(const std::vector<std::byte> &data) {
     return compressed;
 }
 
-std::vector<std::byte> Brotli::decompress(const std::vector<std::byte> &compressedData) {
+std::vector<std::byte> Brotli::decompress(const std::span<const std::byte> &compressedData) {
     size_t decoded_size = 0;
     std::vector<std::byte> decompressed;
 

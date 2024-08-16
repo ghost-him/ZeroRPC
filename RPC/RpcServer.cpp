@@ -49,3 +49,7 @@ void RpcServer::run() {
     _server.run();
 }
 
+void RpcServer::set_compress_algo(CompressionType type) {
+    this->_compressionType = type;
+}
+

@@ -141,6 +141,7 @@ void TcpServer::handleNewConnections() {
         subReactors[idx]->addFd(clientFd, EPOLLIN | EPOLLET);
         fdLoc[clientFd] = idx;
         SocketChannelPtr newChannel = std::make_shared<SocketChannel>(clientFd, dynamic_cast<Network*>(this));
+        newChannel->set_compress_algo(_compressionType);
         channels[clientFd] = newChannel;
     }
 }

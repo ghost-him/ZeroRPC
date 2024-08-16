@@ -34,40 +34,25 @@ TEST(RpcClientTest, initTest) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
-/*
+
 TEST(RpcClientTest, executeTimeConsumingTask) {
     RpcClient client("127.0.0.1", 23333);
     client.run();
     std::cerr << "time consuming task ask:" << std::endl;
-    int res = client.call("add", 1, 2);
+    int res = client.call<int>("add", 1, 2);
     std::cerr << "res : " << res << std::endl;
     while(1) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
- */
-/*
 
-
-TEST(RpcClientTest, customClass) {
+TEST(RpcClientText, testCompression) {
     RpcClient client("127.0.0.1", 23333);
+    client.set_compress_algo(CompressionType::Brotli);
     client.run();
-    myClass a {
-        .a = 10,
-        .b = 20,
-    };
-    myClass b {
-        .a = 12,
-        .b = 30,
-    };
-
-    nlohmann::json c = a;
-
-    myClass res = client.call<int>("add3", a, b);
-    std::cerr << "res :" << res.a << "  " << res.b << std::endl;
-
+    int res = client.call<int>("add", 1, 2);
+    std::cerr << "res : " << res << std::endl;
     while(1) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
-*/

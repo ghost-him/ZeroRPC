@@ -5,6 +5,8 @@
 #pragma once
 
 #include "Channel.h"
+#include <unordered_set>
+
 
 class Network {
     friend class SocketChannel;
@@ -28,9 +30,14 @@ public:
         this->_onSendMessage = std::move(messageHandler);
     }
 
+    void set_compress_algo(CompressionType type) {
+        this->_compressionType = type;
+    }
+
     virtual ~Network() = default;
 
 protected:
+    CompressionType _compressionType = CompressionType::None;
     std::function<void(std::function<void()>)> _executor;
     std::function<void(SocketChannelPtr ptr, DataPtr data)> _onReadMessage;
     std::function<void(SocketChannelPtr ptr)> _onSendMessage;

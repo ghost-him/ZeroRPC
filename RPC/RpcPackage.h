@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../Core/DataStream.h"
+#include "../Core/Compression.h"
 #include <string>
 #include <utility>
 

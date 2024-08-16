@@ -16,14 +16,15 @@ TEST(ServerTest, run) {
         });
         ms.setReadMessageCallback([](SocketChannelPtr channel, DataPtr ptr){
             std::cerr << "收到一个消息，并原路返回：";
-            for (int i {0}; i < ptr->size(); i ++) {
-                std::cerr << std::to_integer<char>((*ptr)[i]);
+            for (const auto& byte : (*ptr)) {
+                char c = static_cast<char>(byte);
+                std::cout << c;
             }
-            std::cerr << std::endl;
+            std::cout << std::endl;
             std::span<std::byte> byte_span = std::span(ptr->data(), ptr->size());
             channel->writeData(byte_span);
         });
-
+        ms.set_compress_algo(CompressionType::Brotli);
         ms.run();
     } catch (const std::exception& e) {
         std:: cerr << e.what() << std::endl;

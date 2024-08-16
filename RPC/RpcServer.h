@@ -19,7 +19,10 @@ public:
 
     void run();
 
+    void set_compress_algo(CompressionType type);
+
 private:
+    CompressionType _compressionType {CompressionType::None};
     ThreadPool* _threadPool;
     HandlerManager _manager;
     TcpServer _server;

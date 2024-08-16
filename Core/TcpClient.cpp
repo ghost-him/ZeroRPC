@@ -57,6 +57,7 @@ void TcpClient::run() {
 
     _running = true;
     _channel = std::make_shared<SocketChannel>(_fd, dynamic_cast<Network*>(this));
+    _channel->set_compress_algo(_compressionType);
     _executor([this](){
         this->readData();
     });

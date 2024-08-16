@@ -29,15 +29,11 @@ TEST(ClientTest, run) {
             std::cerr << "receive new message : ";
             for (const auto& byte : (*ptr)) {
                 char c = static_cast<char>(byte);
-                if (std::isprint(c)) {
-                    std::cout << c;
-                } else {
-                    std::cout << '.';
-                }
+                std::cout << c;
             }
             std::cout << std::endl;
         });
-
+        ms.set_compress_algo(CompressionType::Brotli);
         ms.run();
 
         timer.setPeriodicTimer([&](){

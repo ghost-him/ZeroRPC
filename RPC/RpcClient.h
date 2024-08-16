@@ -19,7 +19,10 @@ public:
 
     void run();
 
+    void set_compress_algo(CompressionType type);
+
 private:
+    CompressionType _compressionType {CompressionType::None};
     ThreadPool* _thread_pool;
     TcpClient _tcpClient;
 
@@ -34,6 +37,7 @@ Ret RpcClient::call(const std::string &method, Args&&... args) {
     request.method = method;
     DataStream ds;
     ds.write_args(args...);
+
     request.params = ds;
     request.id = generate_uuid();
 

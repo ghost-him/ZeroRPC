@@ -5,16 +5,22 @@
 #pragma once
 #include <vector>
 #include <cstddef>
+#include <span>
+
+enum class CompressionType {
+    None = 0,
+    Brotli = 1
+};
 
 class Compression {
 public:
     virtual ~Compression() = default;
-    virtual std::vector<std::byte> compress(const std::vector<std::byte>& data) = 0;
-    virtual std::vector<std::byte> decompress(const std::vector<std::byte>& compressedData) = 0;
+    virtual std::vector<std::byte> compress(const std::span<const std::byte>& data) = 0;
+    virtual std::vector<std::byte> decompress(const std::span<const std::byte>& compressedData) = 0;
 };
 
 class Brotli : public Compression {
 public:
-    std::vector<std::byte> compress(const std::vector<std::byte>& data) override;
-    std::vector<std::byte> decompress(const std::vector<std::byte>& compressedData) override;
+    std::vector<std::byte> compress(const std::span<const std::byte>& data) override;
+    std::vector<std::byte> decompress(const std::span<const std::byte>& compressedData) override;
 };

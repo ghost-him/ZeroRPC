@@ -54,3 +54,10 @@ TEST (RpcServerTest, customClass) {
     server.registerMethod("add3", add3);
     server.run();
 }
+
+TEST (RpcServerText, testCompression) {
+    RpcServer server(23333);
+    server.set_compress_algo(CompressionType::Brotli);
+    server.registerMethod("add", add);
+    server.run();
+}
