@@ -46,6 +46,33 @@ TEST(RpcClientTest, executeTimeConsumingTask) {
     }
 }
 
+class myClass :public enable_serializable {
+public:
+    int a, b;
+    myClass operator+(const myClass& other) const {
+        myClass ret;
+        ret.a = this->a + other.a;
+        ret.b = this->b + other.b;
+        return ret;
+    }
+    SERIALIZE(a, b)
+};
+
+TEST(RpcClientTest, testCustomClass) {
+    RpcClient client("127.0.0.1", 23333);
+    client.run();
+    myClass a, b;
+    a.a = 10;
+    a.b = 20;
+    b.a = 30;
+    b.b = 40;
+    auto ret = client.call<myClass>("add4", a, b);
+    std::cout << ret.a << " " << ret.b << std::endl;
+    while(1) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+}
+
 TEST(RpcClientText, testCompression) {
     RpcClient client("127.0.0.1", 23333);
     client.set_compress_algo(CompressionType::Brotli);

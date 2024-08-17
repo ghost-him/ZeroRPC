@@ -45,13 +45,13 @@ public:
     SERIALIZE(a, b)
 };
 
-myClass add3(myClass a, myClass b) {
+myClass add4(myClass a, myClass b) {
     return a + b;
 }
 
 TEST (RpcServerTest, customClass) {
     RpcServer server(23333);
-    server.registerMethod("add3", add3);
+    server.registerMethod("add4", add4);
     server.run();
 }
 
@@ -60,4 +60,17 @@ TEST (RpcServerText, testCompression) {
     server.set_compress_algo(CompressionType::Brotli);
     server.registerMethod("add", add);
     server.run();
+}
+
+class Generator {
+public:
+    int get_new_id() {
+        return _id++;
+    }
+private:
+    int _id { 1 };
+};
+
+TEST (RpcServerTest, testMemberFunc) {
+
 }

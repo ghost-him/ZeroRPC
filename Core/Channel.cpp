@@ -83,8 +83,9 @@ std::vector<std::byte> SocketChannel::encodeString(const std::span<const std::by
         ret.resize(1 + plain_string.size());
         std::memcpy(ret.data() + 1, plain_string.data(), plain_string.size());
     }
-
-    delete alg;
+    if (alg != nullptr) {
+        delete alg;
+    }
     return ret;
 }
 
@@ -113,7 +114,9 @@ std::vector<std::byte> SocketChannel::decodeString(const std::span<const std::by
         std::memcpy(ret.data(), encoded_string.data() + 1, message_size);
     }
 
-    delete alg;
+    if (alg != nullptr) {
+        delete alg;
+    }
     return ret;
 }
 
