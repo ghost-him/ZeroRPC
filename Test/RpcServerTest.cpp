@@ -72,5 +72,10 @@ private:
 };
 
 TEST (RpcServerTest, testMemberFunc) {
-
+    RpcServer server(23333);
+    Generator gen;
+    server.registerMethod("test", [&](){
+        return gen.get_new_id();
+    });
+    server.run();
 }

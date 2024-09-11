@@ -34,10 +34,26 @@ private:
     std::function<Ret(Args...)> func;
 };
 
+// 针对void返回类型的特化实现
+template<typename... Args>
+class FunctionHandler<void, Args...> : public HandlerBase {
+public:
+    FunctionHandler(std::function<void(Args...)> func) : func(func) {}
+
+    DataStream call(DataStream inArgs) override {
+        auto args = inArgs.get_args<Args...>();
+        std::apply(func, args);  // 调用函数，但不处理返回值
+        return {};  // 对于void类型，返回一个空的DataStream
+    }
+
+private:
+    std::function<void(Args...)> func;
+};
+
 class HandlerManager {
 public:
     template<typename Ret, typename ... Args>
-    void registerHandler(std::string_view name, Ret(*func)(Args...)) {
+    void registerHandler(std::string_view name, std::function<Ret(Args...)> func) {
         handlers[std::move(std::string(name))] = std::make_any<std::shared_ptr<HandlerBase>>(
                 std::make_shared<FunctionHandler<Ret, Args...>>(func)
         );

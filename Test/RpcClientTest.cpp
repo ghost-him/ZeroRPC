@@ -73,7 +73,7 @@ TEST(RpcClientTest, testCustomClass) {
     }
 }
 
-TEST(RpcClientText, testCompression) {
+TEST(RpcClientTest, testCompression) {
     RpcClient client("127.0.0.1", 23333);
     client.set_compress_algo(CompressionType::Brotli);
     client.run();
@@ -82,4 +82,15 @@ TEST(RpcClientText, testCompression) {
     while(1) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+}
+
+TEST(RpcClientTest, testMemberFunc) {
+    RpcClient client("127.0.0.1", 23333);
+    client.run();
+    while(1) {
+        std::cout << client.call<int32_t>("test");
+        std::cout << "send test message" << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds (1000));
+    }
+
 }

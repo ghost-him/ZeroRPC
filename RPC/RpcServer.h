@@ -14,8 +14,8 @@ class RpcServer {
 public:
     RpcServer(int port);
 
-    template<typename Ret, typename... Args>
-    void registerMethod(std::string_view name, Ret(*func)(Args...));
+    template<typename Func>
+    void registerMethod(std::string_view name, Func func);
 
     void run();
 
@@ -28,7 +28,9 @@ private:
     TcpServer _server;
 };
 
-template<typename Ret, typename... Args>
-void RpcServer::registerMethod(std::string_view name, Ret(*func)(Args...)) {
-    _manager.registerHandler(name, func);
+template<typename Func>
+void RpcServer::registerMethod(std::string_view name, Func func) {
+    // 使用 std::function 包装所有的可调用对象
+    using FunctionType = typename std::function<decltype(func)>;
+    _manager.registerHandler(name, std::function(func));
 }

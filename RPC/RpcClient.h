@@ -36,8 +36,9 @@ Ret RpcClient::call(const std::string &method, Args&&... args) {
     RPCRequest request;
     request.method = method;
     DataStream ds;
-    ds.write_args(args...);
-
+    if constexpr (sizeof...(Args) > 0) {
+        ds.write_args(std::forward<Args>(args)...);
+    }
     request.params = ds;
     request.id = generate_uuid();
 
