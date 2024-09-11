@@ -31,7 +31,7 @@ void SocketChannel::parseMessage() {
                 //表明当前已经有一个用于存放长度的值
                 std::array<std::byte, HEAD_LENGTH> temp;
                 readBuffer.dequeue(temp.begin(), HEAD_LENGTH);
-                readBufferLength = mem2variant<int32_t>(temp, 1, BUFFER_SIZE / 2);
+                readBufferLength = mem2variant<int32_t>(temp);
             } else {
                 break;
             }

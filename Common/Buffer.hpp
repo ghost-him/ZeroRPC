@@ -8,6 +8,8 @@
 #include <cstring> // memcpy
 #include <stdexcept>
 #include <mutex>
+#include <bit>
+#include <algorithm>
 
 
 namespace Common {
@@ -157,36 +159,27 @@ struct type_identity {
 
 // 用默认的读法，如果值的范围不在规定的范围内，则用小端的方式
 template<typename T>
-T mem2variant(std::span<std::byte> memory, typename type_identity<T>::type minValue, typename type_identity<T>::type maxValue) requires std::totally_ordered<T> {
+T mem2variant(std::span<std::byte> memory) requires std::totally_ordered<T> {
     T res {};
-    int64_t varLen = sizeof(T);
-    int64_t byteLen = sizeof(std::byte) * 8;
-    // 大端方式
-    for (int64_t i {0}; i < varLen; i ++) {
-        res = (res << byteLen) + std::to_integer<T>(memory[i]);
+    if (memory.size() < sizeof(T)) {
+        throw std::runtime_error("mem2variant convert error! invalid memory size!");
     }
-    if (res >= minValue && res <= maxValue) {
-        return res;
+    if (std::endian::native == std::endian::big) {
+        std::reverse(memory.begin(), memory.end());
+        std::memcpy(&res, memory.data(), sizeof (T));
+        std::reverse(memory.begin(), memory.end());
+    } else {
+        std::memcpy(&res, memory.data(), sizeof (T));
     }
-
-    // 小端方式
-    for (int64_t i {varLen - 1}; i >= 0; i --) {
-        res = (res << byteLen) + std::to_integer<T>(memory[i]);
-    }
-    if (res >= minValue && res <= maxValue) {
-        return res;
-    }
-    throw std::runtime_error("mem2variant convert error! ");
+    return res;
 }
 
 template<typename T>
 std::array<std::byte, sizeof(T)> variant2mem(typename type_identity<T>::type value) requires std::totally_ordered<T> {
     std::array<std::byte, sizeof(T)> res;
-    int64_t varLen = sizeof(T);
-    int64_t byteLen = sizeof(std::byte) * 8;
-    for (int64_t i {varLen - 1}; i >= 0; i --) {
-        res[i] = std::byte(value & 0xff);
-        value >>= byteLen;
+    std::memcpy(res.data(), &value, sizeof(T));
+    if (std::endian::native == std::endian::big) {
+        std::reverse(res.begin(), res.end());
     }
     return res;
 }

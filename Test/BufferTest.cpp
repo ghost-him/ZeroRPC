@@ -67,6 +67,6 @@ TEST(BufferTest, memConvertValue ) {
     }
     std::cout << std::endl;
 
-    auto ans = mem2variant<int64_t>(res, 0, 1234567);
+    auto ans = mem2variant<int64_t>(res);
     ASSERT_EQ(value, ans);
 }
