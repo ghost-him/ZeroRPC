@@ -6,9 +6,9 @@
 
 todo:
 
-- [ ] 支持成员函数，lamdba函数
-- [x] 优化性能(tcp粘包处理的逻辑)
-- [ ] 支持心跳检测
+- 增强鲁棒性：call函数调用失败时的处理，连接失败的处理
+- 构建异常模块，用于快速定位异常位置
+- RPCServer与RPCClient提供线程池，定时器的接口，方便用户直接调用内置模块
 
 ## 快速上手
 
@@ -30,6 +30,7 @@ int main() {
     server.registerMethod("add", add);
     server.registerMethod("append", append);
     server.run();
+    return 0;
 }
 ```
 
@@ -46,6 +47,7 @@ int main() {
     while(1) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+    return 0;
 }
 ```
 
@@ -70,10 +72,11 @@ myClass add4(myClass a, myClass b) {
     return a + b;
 }
 
-TEST (RpcServerTest, customClass) {
+int main() {
     RpcServer server(23333);
     server.registerMethod("add4", add4);
     server.run();
+    return 0;
 }
 ```
 
@@ -106,6 +109,7 @@ int main() {
     while(1) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+    return 0;
 }
 ```
 ### 使用数据压缩功能
@@ -121,6 +125,7 @@ int main () {
     server.set_compress_algo(CompressionType::Brotli);  // 使用Brotli算法压缩数据
     server.registerMethod("add", add);
     server.run();
+    return 0;
 }
 ```
 
@@ -137,5 +142,47 @@ int main() {
     while(1) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+    return 0;
 }
 ```
+
+### 调用成员函数
+
+RPCServer
+
+```cpp
+class Generator {
+public:
+    int get_new_id() {
+        return _id++;
+    }
+private:
+    int _id { 1 };
+};
+
+int main {
+    RpcServer server(23333);
+    Generator gen;
+    server.registerMethod("requestID", [&](){
+        return gen.get_new_id();
+    });
+    server.run();
+    return 0;
+}
+```
+
+RPCClient
+
+```cpp
+int main {
+    RpcClient client("127.0.0.1", 23333);
+    client.run();
+    while(1) {
+        std::cout << client.call<int32_t>("requestID") << std::endl;
+        std::cout << "send test message" << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds (1000));
+    }
+    return 0;
+}
+```
+

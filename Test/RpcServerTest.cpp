@@ -14,10 +14,16 @@ std::string append(std::string a, std::string b) {
     return a + b;
 }
 
+std::string testPargsOrder(int a, std::string b) {
+    // 用于测试参数的顺序
+    return std::to_string(a) + b;
+}
+
 TEST (RpcServerTest, initTest) {
     RpcServer server(23333);
     server.registerMethod("add", add);
     server.registerMethod("append", append);
+    server.registerMethod("pargOrder", testPargsOrder);
     server.run();
 }
 
@@ -74,7 +80,7 @@ private:
 TEST (RpcServerTest, testMemberFunc) {
     RpcServer server(23333);
     Generator gen;
-    server.registerMethod("test", [&](){
+    server.registerMethod("requestID", [&](){
         return gen.get_new_id();
     });
     server.run();

@@ -17,6 +17,8 @@ public:
 
     void sendMessage(std::string_view data);
 
+    void stop();
+
     ~TcpClient() override = default;
 
 private:

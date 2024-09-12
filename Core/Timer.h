@@ -9,6 +9,7 @@
 #include <queue>
 #include <mutex>
 #include <unordered_set>
+#include <atomic>
 
 
 struct Handler {
@@ -47,6 +48,8 @@ public:
     void removeTimer(uint64_t id);
 
     void run();
+
+    void stop();
 private:
 
     uint64_t createTimer(std::function<void()> func, std::chrono::milliseconds waitTime, bool isPeriodic);
@@ -57,5 +60,6 @@ private:
     std::unordered_set<uint64_t> _removedTimerID;
     uint64_t _nextID {1};
     std::mutex _timerLock;
+    std::atomic<bool> _running;
     std::function<void(std::function<void()>)> _executor;
 };

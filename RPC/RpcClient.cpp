@@ -30,13 +30,34 @@ RpcClient::RpcClient(std::string_view host, uint16_t port)
             _pending_request.erase(it);
         }
     });
+
+    _timer.setExecutor([this](std::function<void()> func){
+        this->_thread_pool->commit(func, false);
+    });
+
+    _timer.setPeriodicTimer([this](){
+        this->heartbeat_signal();
+        }, std::chrono::seconds(HEARTBEAT_REPEAT_TIME));
+
 }
 
 void RpcClient::run() {
     _tcpClient.run();
+    this->_thread_pool->commit([this](){
+        _timer.run();
+    }, false);
 }
 
 void RpcClient::set_compress_algo(CompressionType type) {
     this->_compressionType = type;
 }
 
+void RpcClient::heartbeat_signal() {
+    this->call<void>(HEARTBEAT_SIG);
+}
+
+RpcClient::~RpcClient() {
+    // todo
+    _tcpClient.stop();
+    _timer.stop();
+}

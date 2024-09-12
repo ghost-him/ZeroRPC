@@ -123,3 +123,7 @@ std::vector<std::byte> SocketChannel::decodeString(const std::span<const std::by
 void SocketChannel::set_compress_algo(CompressionType type) {
     this->compressionType = type;
 }
+
+int SocketChannel::getFd() {
+    return this->fd;
+}

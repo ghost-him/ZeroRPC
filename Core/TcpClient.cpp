@@ -101,3 +101,7 @@ void TcpClient::readData() {
         }
     }
 }
+
+void TcpClient::stop() {
+    _running = false;
+}

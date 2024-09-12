@@ -39,25 +39,26 @@ void Timer::removeTimer(uint64_t id) {
 }
 
 void Timer::run() {
-    std::lock_guard<std::mutex> guard{_timerLock};
-    auto nowTime {std::chrono::high_resolution_clock::now()};
-    if (!_timers.empty()) {
-        while(!_timers.empty() && nowTime >= _timers.top().nextTime) {
-            auto timer {_timers.top()};
-            _timers.pop();
+    while(_running) {
+        std::lock_guard<std::mutex> guard{_timerLock};
+        auto nowTime {std::chrono::high_resolution_clock::now()};
+        if (!_timers.empty()) {
+            while(!_timers.empty() && nowTime >= _timers.top().nextTime) {
+                auto timer {_timers.top()};
+                _timers.pop();
 
-            if (_removedTimerID.contains(timer.id)) {
-                continue;
-            }
+                if (_removedTimerID.contains(timer.id)) {
+                    continue;
+                }
 
-            _executor(timer.callbackFunction);
-            if (timer.isPeriodic) {
-                timer.updateTimer();
-                _timers.push(timer);
+                _executor(timer.callbackFunction);
+                if (timer.isPeriodic) {
+                    timer.updateTimer();
+                    _timers.push(timer);
+                }
             }
         }
     }
-
 }
 
 uint64_t Timer::getTimerID() {
@@ -89,5 +90,10 @@ Timer::Timer(std::function<void(std::function<void()>)> executor) {
     this->_executor = [](std::function<void()> func) -> void {
         func();
     };
+    _running = true;
+}
+
+void Timer::stop() {
+    _running = false;
 }
 

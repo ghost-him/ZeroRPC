@@ -43,7 +43,7 @@ if(ENABLE_UNIT_TESTS)
 else()
     # 添加可执行文件
     add_executable(ZeroRPC ${SRC} ${INC})
-    target_link_libraries(unitTest brotlienc brotlidec uuid)
+    target_link_libraries(ZeroRPC brotlienc brotlidec uuid)
 
 endif ()
 

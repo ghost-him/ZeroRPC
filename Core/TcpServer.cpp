@@ -81,7 +81,6 @@ void TcpServer::run()  {
             this->subReactorRun(id);
         });
     }
-
     while (!stop) {
         auto events = mainReactor.wait(-1);
         for (const auto& event : events) {
@@ -143,6 +142,10 @@ void TcpServer::handleNewConnections() {
         SocketChannelPtr newChannel = std::make_shared<SocketChannel>(clientFd, dynamic_cast<Network*>(this));
         newChannel->set_compress_algo(_compressionType);
         channels[clientFd] = newChannel;
+
+        if (onNewConnection) {
+            onNewConnection(clientFd);
+        }
     }
 }
 
@@ -190,6 +193,10 @@ void TcpServer::closeConnection(int fd) {
     fdLoc.erase(fd);
     channels.erase(fd);
     close(fd);
+
+    if (onDisconnection) {
+        onDisconnection(fd);
+    }
 }
 
 void TcpServer::trySend(SocketChannelPtr channel) {
@@ -223,3 +230,10 @@ void TcpServer::trySend(SocketChannelPtr channel) {
     reactor->modifyFd(fd, EPOLLIN | EPOLLET);
 }
 
+void TcpServer::setNewConnectionCallback(std::function<void(int)> connectionCallback) {
+    this->onNewConnection = std::move(connectionCallback);
+}
+
+void TcpServer::setDisconnectCallback(std::function<void(int)> disconnectCallback) {
+    this->onDisconnection = std::move(disconnectCallback);
+}

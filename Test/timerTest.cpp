@@ -29,9 +29,9 @@ TEST(TimerTest, act1) {
         exit(0);
     });
     the1.detach();
-    while(true) {
-        timer.run();
-    }
+
+    timer.run();
+
 
 }
 
@@ -40,9 +40,7 @@ TEST(TimerTest, testTimeoutAction) {
     timer.setTimeoutTimer([](){
         std::cerr << "过了1s" << std::endl;
     }, std::chrono::seconds(1));
-    while(true) {
-        timer.run();
-    }
+    timer.run();
 }
 
 TEST(TimerTest, testPeriodicAction) {
@@ -50,9 +48,8 @@ TEST(TimerTest, testPeriodicAction) {
     timer.setPeriodicTimer([](){
         std::cerr << "过了1s" << std::endl;
     }, std::chrono::seconds(1));
-    while(true) {
-        timer.run();
-    }
+    timer.run();
+
 }
 
 TEST(TimerTest, handleTest) {

@@ -40,9 +40,9 @@ TEST(ClientTest, run) {
             std::cerr << "send message!" << std::endl;
             ms.sendMessage("hello!");
         }, std::chrono::seconds(2));
-        while(1) {
-            timer.run();
-        }
+
+        timer.run();
+
     } catch (const std::exception& e) {
         std:: cerr << e.what() << std::endl;
     }

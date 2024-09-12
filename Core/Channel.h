@@ -12,7 +12,7 @@
 #include <functional>
 #include "Compression.h"
 
-constexpr int BUFFER_SIZE = 2 * 32 * 1024 + 8; // 一次最多可以传输 64 * 1024 = 64KB 的数据，缓冲区设置为其2倍
+constexpr int BUFFER_SIZE = 2 * 8 * 1024 + 8; // 一次最多可以传输 64 * 1024 = 64KB 的数据，缓冲区设置为其2倍
 constexpr int HEAD_LENGTH = sizeof(int32_t);
 
 
@@ -32,6 +32,8 @@ public:
     bool writeData(std::span<const std::byte> data);
 
     void set_compress_algo(CompressionType type);
+
+    int getFd();
 
 private:
     /*

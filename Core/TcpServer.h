@@ -53,6 +53,12 @@ public:
 
     virtual ~TcpServer() = default;
 
+    void setNewConnectionCallback(std::function<void(int)> connectionCallback);
+
+    void setDisconnectCallback(std::function<void(int)> disconnectCallback);
+
+    void closeConnection(int fd);
+
 private:
 
     static int createListenSocket(int port);
@@ -60,8 +66,6 @@ private:
     void handleNewConnections();
 
     void subReactorRun(int index);
-
-    void closeConnection(int fd);
 
     void trySend(SocketChannelPtr channel);
     /*
@@ -75,8 +79,13 @@ private:
     int listen_fd;
     std::atomic<bool> stop;
 
-
-
     std::unordered_map<int, SocketChannelPtr> channels;
     std::unordered_map<int, int> fdLoc;
+
+    /*
+     * 如果有一个新的用户创建时，则调用，用于传出当前用户的id
+     */
+    std::function<void(int)> onNewConnection;
+
+    std::function<void(int)> onDisconnection;
 };
