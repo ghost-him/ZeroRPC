@@ -9,20 +9,20 @@
 #include "Channel.h"
 #include <atomic>
 
-class TcpClient : public Network {
+class Tcp_Client : public Network {
 public:
-    TcpClient(std::string_view addr, uint16_t port);
+    Tcp_Client(std::string_view addr, uint16_t port);
 
     void run() override;
 
-    void sendMessage(std::string_view data);
+    void send_message(std::string_view data);
 
     void stop();
 
-    ~TcpClient() override = default;
+    ~Tcp_Client() override = default;
 
 private:
-    void readData();
+    void read_data();
 
     void disconnect();
     int _fd;

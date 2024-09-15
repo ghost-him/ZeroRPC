@@ -2,7 +2,7 @@
 // Created by ghost-him on 8/9/24.
 //
 
-#include "TcpServer.h"
+#include "Tcp_Server.h"
 #include <cerrno>
 #include <cstring>
 
@@ -16,7 +16,7 @@ Reactor::~Reactor() {
     close(epoll_fd);
 }
 
-void Reactor::addFd(int fd, uint32_t events) {
+void Reactor::add_fd(int fd, uint32_t events) {
     epoll_event ev{};
     ev.events = events;
     ev.data.fd = fd;
@@ -25,7 +25,7 @@ void Reactor::addFd(int fd, uint32_t events) {
     }
 }
 
-void Reactor::removeFd(int fd) {
+void Reactor::remove_fd(int fd) {
     if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, nullptr) == -1) {
         throw std::runtime_error("Failed to remove _fd from epoll");
     }
@@ -39,7 +39,7 @@ std::span <epoll_event> Reactor::wait(int timeout) {
     return std::span(events.data(), nfds);
 }
 
-void Reactor::modifyFd(int fd, uint32_t events) {
+void Reactor::modify_fd(int fd, uint32_t events) {
     epoll_event ev{};
     ev.events = events;
     ev.data.fd = fd;
@@ -48,50 +48,50 @@ void Reactor::modifyFd(int fd, uint32_t events) {
     }
 }
 
-TcpServer::TcpServer(int port, int num_workers): mainReactor(), stop(false) {
-    listen_fd = createListenSocket(port);
-    mainReactor.addFd(listen_fd, EPOLLIN | EPOLLET);
+Tcp_Server::Tcp_Server(int port, int num_workers): _main_reactor(), _stop(false) {
+    _listen_fd = create_listen_socket(port);
+    _main_reactor.add_fd(_listen_fd, EPOLLIN | EPOLLET);
 
-    subReactors.reserve(num_workers);
+    _sub_reactors.reserve(num_workers);
     for (int i = 0; i < num_workers; ++i) {
-        subReactors.emplace_back(std::make_unique<Reactor>());
+        _sub_reactors.emplace_back(std::make_unique<Reactor>());
     }
     _executor = nullptr;
 
-    setSendMessageCallback([this] (SocketChannelPtr channel){
-        int fd = channel->fd;
-        int reactorIndex = fdLoc[fd];
-        auto& reactor = subReactors[reactorIndex];
+    set_send_message_callback([this] (SocketChannelPtr channel){
+        int fd = channel->_fd;
+        int reactorIndex = _fd_location[fd];
+        auto& reactor = _sub_reactors[reactorIndex];
 
         // 修改 epoll 事件,添加 EPOLLOUT
-        reactor->modifyFd(fd, EPOLLIN | EPOLLOUT | EPOLLET);
+        reactor->modify_fd(fd, EPOLLIN | EPOLLOUT | EPOLLET);
 
         // 尝试立即发送数据
-        trySend(channel);
+        try_send(channel);
     });
 }
 
-void TcpServer::run()  {
+void Tcp_Server::run()  {
     if (_executor == nullptr) {
         throw std::runtime_error("反应堆未设置线程池");
     }
 
-    for (size_t i = 0; i < subReactors.size(); ++i) {
+    for (size_t i = 0; i < _sub_reactors.size(); ++i) {
         _executor([this, id = i](){
-            this->subReactorRun(id);
+            this->sub_reactor_run(id);
         });
     }
-    while (!stop) {
-        auto events = mainReactor.wait(-1);
+    while (!_stop) {
+        auto events = _main_reactor.wait(-1);
         for (const auto& event : events) {
-            if (event.data.fd == listen_fd) {
-                handleNewConnections();
+            if (event.data.fd == _listen_fd) {
+                handle_new_connections();
             }
         }
     }
 }
 
-int TcpServer::createListenSocket(int port) {
+int Tcp_Server::create_listen_socket(int port) {
     {
         int fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
         if (fd == -1) {
@@ -123,11 +123,11 @@ int TcpServer::createListenSocket(int port) {
     }
 }
 
-void TcpServer::handleNewConnections() {
+void Tcp_Server::handle_new_connections() {
     while (true) {
         sockaddr_in client_addr{};
         socklen_t client_len = sizeof(client_addr);
-        int clientFd = accept4(listen_fd, reinterpret_cast<sockaddr*>(&client_addr), &client_len, SOCK_NONBLOCK);
+        int clientFd = accept4(_listen_fd, reinterpret_cast<sockaddr*>(&client_addr), &client_len, SOCK_NONBLOCK);
         if (clientFd == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 break;  // No more connections to accept
@@ -136,34 +136,34 @@ void TcpServer::handleNewConnections() {
             }
         }
 
-        int idx = clientFd % subReactors.size();
-        subReactors[idx]->addFd(clientFd, EPOLLIN | EPOLLET);
-        fdLoc[clientFd] = idx;
-        SocketChannelPtr newChannel = std::make_shared<SocketChannel>(clientFd, dynamic_cast<Network*>(this));
+        int idx = clientFd % _sub_reactors.size();
+        _sub_reactors[idx]->add_fd(clientFd, EPOLLIN | EPOLLET);
+        _fd_location[clientFd] = idx;
+        SocketChannelPtr newChannel = std::make_shared<Socket_Channel>(clientFd, dynamic_cast<Network*>(this));
         newChannel->set_compress_algo(_compressionType);
-        channels[clientFd] = newChannel;
+        _channels[clientFd] = newChannel;
 
-        if (onNewConnection) {
-            onNewConnection(clientFd);
+        if (_on_new_connection) {
+            _on_new_connection(clientFd);
         }
     }
 }
 
-void TcpServer::subReactorRun(int index) {
-    while (!stop) {
-        auto events = subReactors[index]->wait(100);
+void Tcp_Server::sub_reactor_run(int index) {
+    while (!_stop) {
+        auto events = _sub_reactors[index]->wait(100);
         for (const auto& event : events) {
             if (event.events & EPOLLIN) {
                 _executor([this, fd = event.data.fd](){
-                    this->readData(fd);
+                    this->read_data(fd);
                 });
             }
         }
     }
 }
 
-void TcpServer::readData(int fd) {
-    SocketChannelPtr channel = channels[fd];
+void Tcp_Server::read_data(int fd) {
+    SocketChannelPtr channel = _channels[fd];
 
     std::array<std::byte, BUFFER_SIZE> buffer;
     while (true) {
@@ -172,45 +172,45 @@ void TcpServer::readData(int fd) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 break;  // No more _data to read
             } else {
-                closeConnection(fd);
+                close_connection(fd);
                 return;
             }
         } else if (n == 0) {
-            closeConnection(fd);
+            close_connection(fd);
             return;
         }
-        channel->readBuffer.enqueue(buffer.begin(), buffer.begin() + n);
-        channel->parseMessage();
+        channel->_read_buffer.enqueue(buffer.begin(), buffer.begin() + n);
+        channel->parse_message();
     }
 
-    channel->parseMessage();
+    channel->parse_message();
 
 }
 
-void TcpServer::closeConnection(int fd) {
-    int loc = fdLoc[fd];
-    subReactors[loc]->removeFd(fd);
-    fdLoc.erase(fd);
-    channels.erase(fd);
+void Tcp_Server::close_connection(int fd) {
+    int loc = _fd_location[fd];
+    _sub_reactors[loc]->remove_fd(fd);
+    _fd_location.erase(fd);
+    _channels.erase(fd);
     close(fd);
 
-    if (onDisconnection) {
-        onDisconnection(fd);
+    if (_on_disconnection) {
+        _on_disconnection(fd);
     }
 }
 
-void TcpServer::trySend(SocketChannelPtr channel) {
-    std::unique_lock<std::mutex> guard(channel->sendLock);
-    int fd = channel->fd;
-    while (!channel->sendMessages.empty()) {
-        DataPtr message = channel->sendMessages.front();
-        ssize_t sent = send(fd, message->data() + channel->sendOffset, message->size() - channel->sendOffset, MSG_NOSIGNAL);
+void Tcp_Server::try_send(SocketChannelPtr channel) {
+    std::unique_lock<std::mutex> guard(channel->_send_lock);
+    int fd = channel->_fd;
+    while (!channel->_send_messages.empty()) {
+        DataPtr message = channel->_send_messages.front();
+        ssize_t sent = send(fd, message->data() + channel->_send_offset, message->size() - channel->_send_offset, MSG_NOSIGNAL);
 
         if (sent > 0) {
-            channel->sendOffset += sent;
-            if (channel->sendOffset == message->size()) {
-                channel->sendMessages.pop();
-                channel->sendOffset = 0;
+            channel->_send_offset += sent;
+            if (channel->_send_offset == message->size()) {
+                channel->_send_messages.pop();
+                channel->_send_offset = 0;
             }
         } else if (sent == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -218,22 +218,22 @@ void TcpServer::trySend(SocketChannelPtr channel) {
                 return;
             } else {
                 // 发生错误,关闭连接
-                closeConnection(fd);
+                close_connection(fd);
                 return;
             }
         }
     }
 
     // 所有数据已发送完毕,移除 EPOLLOUT 事件
-    int reactorIndex = fdLoc[fd];
-    auto& reactor = subReactors[reactorIndex];
-    reactor->modifyFd(fd, EPOLLIN | EPOLLET);
+    int reactorIndex = _fd_location[fd];
+    auto& reactor = _sub_reactors[reactorIndex];
+    reactor->modify_fd(fd, EPOLLIN | EPOLLET);
 }
 
-void TcpServer::setNewConnectionCallback(std::function<void(int)> connectionCallback) {
-    this->onNewConnection = std::move(connectionCallback);
+void Tcp_Server::set_new_connection_callback(std::function<void(int)> connection_callback) {
+    this->_on_new_connection = std::move(connection_callback);
 }
 
-void TcpServer::setDisconnectCallback(std::function<void(int)> disconnectCallback) {
-    this->onDisconnection = std::move(disconnectCallback);
+void Tcp_Server::set_disconnect_callback(std::function<void(int)> disconnect_callback) {
+    this->_on_disconnection = std::move(disconnect_callback);
 }

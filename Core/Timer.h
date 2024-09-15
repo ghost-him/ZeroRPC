@@ -14,22 +14,22 @@
 
 struct Handler {
     uint64_t id {0};
-    std::function<void()> callbackFunction;
-    std::chrono::high_resolution_clock::time_point lastTime;
-    std::chrono::high_resolution_clock::time_point nextTime;
-    std::chrono::milliseconds waitTime {0};
-    bool isPeriodic {false};
+    std::function<void()> _callback_function;
+    std::chrono::high_resolution_clock::time_point _last_time;
+    std::chrono::high_resolution_clock::time_point _next_time;
+    std::chrono::milliseconds _wait_time {0};
+    bool _is_periodic {false};
 
-    void createTimer(uint64_t id,
-                     const std::chrono::high_resolution_clock::time_point& createTime,
-                     std::chrono::milliseconds waitTime,
-                     bool isPeriodic,
-                     std::function<void()> callbackFunction);
+    void create_timer(uint64_t id,
+                      const std::chrono::high_resolution_clock::time_point& createTime,
+                      std::chrono::milliseconds waitTime,
+                      bool isPeriodic,
+                      std::function<void()> callbackFunction);
 
-    void updateTimer();
+    void update_timer();
 
     bool operator<(const Handler& other) const {
-        return nextTime > other.nextTime;
+        return _next_time > other._next_time;
     }
 };
 
@@ -39,27 +39,27 @@ private:
 public:
     Timer(std::function<void(std::function<void()>)> executor = nullptr);
 
-    uint64_t setTimeoutTimer(std::function<void()> func, std::chrono::milliseconds waitTime);
+    uint64_t set_timeout_timer(std::function<void()> func, std::chrono::milliseconds wait_time);
 
-    uint64_t setPeriodicTimer(std::function<void()> func, std::chrono::milliseconds waitTime);
+    uint64_t set_periodic_timer(std::function<void()> func, std::chrono::milliseconds wait_time);
 
-    void setExecutor(std::function<void(std::function<void()>)> executor);
+    void set_executor(std::function<void(std::function<void()>)> executor);
 
-    void removeTimer(uint64_t id);
+    void remove_timer(uint64_t id);
 
     void run();
 
     void stop();
 private:
 
-    uint64_t createTimer(std::function<void()> func, std::chrono::milliseconds waitTime, bool isPeriodic);
+    uint64_t create_timer(std::function<void()> func, std::chrono::milliseconds wait_time, bool is_periodic);
 
-    inline uint64_t getTimerID();
+    inline uint64_t get_timer_ID();
 
     std::priority_queue<Handler> _timers;
-    std::unordered_set<uint64_t> _removedTimerID;
+    std::unordered_set<uint64_t> _removed_timer_ID;
     uint64_t _nextID {1};
-    std::mutex _timerLock;
+    std::mutex _timer_lock;
     std::atomic<bool> _running;
     std::function<void(std::function<void()>)> _executor;
 };

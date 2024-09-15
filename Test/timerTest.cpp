@@ -9,18 +9,18 @@
 TEST(TimerTest, act1) {
     Timer timer;
 
-    auto id1 = timer.setPeriodicTimer([](){
+    auto id1 = timer.set_periodic_timer([](){
         std::cout << "过了5秒" << std::endl;
         std::cout << "=================" << std::endl;
     }, std::chrono::seconds(5));
 
-    auto id2 = timer.setPeriodicTimer([](){
+    auto id2 = timer.set_periodic_timer([](){
         std::cout << "过了一秒" << std::endl;
     }, std::chrono::seconds(1));
 
     std::thread the([&](){
         std::this_thread::sleep_for(std::chrono::seconds(12));
-        timer.removeTimer(id2);
+        timer.remove_timer(id2);
     });
     the.detach();
     std::thread the1([]()
@@ -37,7 +37,7 @@ TEST(TimerTest, act1) {
 
 TEST(TimerTest, testTimeoutAction) {
     Timer timer;
-    timer.setTimeoutTimer([](){
+    timer.set_timeout_timer([](){
         std::cerr << "过了1s" << std::endl;
     }, std::chrono::seconds(1));
     timer.run();
@@ -45,7 +45,7 @@ TEST(TimerTest, testTimeoutAction) {
 
 TEST(TimerTest, testPeriodicAction) {
     Timer timer;
-    timer.setPeriodicTimer([](){
+    timer.set_periodic_timer([](){
         std::cerr << "过了1s" << std::endl;
     }, std::chrono::seconds(1));
     timer.run();
@@ -59,7 +59,7 @@ TEST(TimerTest, handleTest) {
         std::cout << "测试函数" << std::endl;
     };
 
-    handler.createTimer(1,
+    handler.create_timer(1,
                         std::chrono::high_resolution_clock ::now(),
                         std::chrono::seconds(3),
                         false,

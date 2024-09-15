@@ -14,12 +14,12 @@
 #include <utility>
 #include "../Common/Singleton.hpp"
 
-#define THREADPOOL Singleton<ThreadPool>::getInstance();
+#define THREADPOOL Singleton<Thread_Pool>::getInstance();
 
-class ThreadPoolMonitor;
+class Thread_Pool_Monitor;
 
-class ThreadPool {
-    friend class ThreadPoolMonitor;
+class Thread_Pool {
+    friend class Thread_Pool_Monitor;
 public:
     using Task = std::function<void()>;
 private:
@@ -34,26 +34,26 @@ private:
         ~Handle() = default;
     };
 public:
-    ThreadPool();
-    ThreadPool(uint32_t minThread, uint32_t maxThread, uint32_t batchSize);
+    Thread_Pool();
+    Thread_Pool(uint32_t minThread, uint32_t maxThread, uint32_t batchSize);
 
     void commit(const Task& func, bool isIOTask);
 
     void stop();
 
-    ~ThreadPool();
+    ~Thread_Pool();
 private:
-    void initThreadPool();
+    void init_thread_pool();
 
-    void daemonTask();
+    void daemon_task();
 
-    void workTask();
+    void work_task();
 
-    void expendThreadPool(uint32_t expendNum);
-    void reduceThreadPool(uint32_t reduceNum);
+    void expend_thread_pool(uint32_t expendNum);
+    void reduce_thread_pool(uint32_t reduceNum);
 
-    const double expendStandardRatio = 0.8;
-    const double reduceStandardRatio = 0.2;
+    const double expend_standard_ratio = 0.8;
+    const double reduce_standard_ratio = 0.2;
 private:
     bool _isStop;
     uint32_t _minThread;            // 最小的线程数
@@ -66,9 +66,9 @@ private:
     uint32_t _destroyedThreadNum;   // 要被清除的线程数
 
     std::condition_variable _taskCV;
-    std::queue<Handle> taskQueue;
-    std::unordered_map<std::thread::id, std::thread> threads;
-    std::thread daemonThread;
-    std::mutex poolLock;
+    std::queue<Handle> _task_queue;
+    std::unordered_map<std::thread::id, std::thread> _threads;
+    std::thread _daemon_thread;
+    std::mutex _pool_lock;
 
 };

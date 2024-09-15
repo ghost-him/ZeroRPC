@@ -2,24 +2,24 @@
 // Created by ghost-him on 8/8/24.
 //
 
-#include "ThreadPool.h"
+#include "Thread_Pool.h"
 #include <iostream>
 
-ThreadPool::ThreadPool()
-        : ThreadPool(std::thread::hardware_concurrency(),
+Thread_Pool::Thread_Pool()
+        : Thread_Pool(std::thread::hardware_concurrency(),
                      std::thread::hardware_concurrency()*5,
-                     std::thread::hardware_concurrency())
+                      std::thread::hardware_concurrency())
 {
 
 }
 
-void ThreadPool::daemonTask() {
+void Thread_Pool::daemon_task() {
     while(true) {
         if (_isStop) {
             break;
         }
 
-        std::unique_lock<std::mutex> guard(poolLock);
+        std::unique_lock<std::mutex> guard(_pool_lock);
         // 如果工作线程大于总线程的80%，并且非io线程不等于核心数，则扩充
         uint32_t cpuTaskNum = _workingThreadNum - _ioTaskNum;
         if (
@@ -30,7 +30,7 @@ void ThreadPool::daemonTask() {
         {
             std::cout << "扩充线程" << std::endl;
             // 扩充线程池
-            expendThreadPool(_batchSize);
+            expend_thread_pool(_batchSize);
         } else if (
                 _workingThreadNum < static_cast<uint32_t>(_threadNum * 0.2) &&
                 _threadNum - _batchSize >= _minThread
@@ -38,7 +38,7 @@ void ThreadPool::daemonTask() {
         {
             std::cout << "减少线程" << std::endl;
             // 减小线程池
-            reduceThreadPool(_batchSize);
+            reduce_thread_pool(_batchSize);
         }
 
         guard.unlock();
@@ -46,7 +46,7 @@ void ThreadPool::daemonTask() {
     }
 }
 
-ThreadPool::ThreadPool(uint32_t minThread, uint32_t maxThread, uint32_t batchSize) {
+Thread_Pool::Thread_Pool(uint32_t minThread, uint32_t maxThread, uint32_t batchSize) {
     _isStop = false;
     _hardwareCore = std::thread::hardware_concurrency();
 
@@ -59,70 +59,70 @@ ThreadPool::ThreadPool(uint32_t minThread, uint32_t maxThread, uint32_t batchSiz
     _workingThreadNum = 0;
     _ioTaskNum = 0;
 
-    initThreadPool();
+    init_thread_pool();
 }
 
-void ThreadPool::expendThreadPool(uint32_t expendNum) {
+void Thread_Pool::expend_thread_pool(uint32_t expendNum) {
     for (int i {0}; i < expendNum; i ++) {
-        std::thread newThread {std::thread(&ThreadPool::workTask, this)};
+        std::thread newThread {std::thread(&Thread_Pool::work_task, this)};
         auto threadID = newThread.get_id();
-        threads.emplace(threadID, std::move(newThread));
+        _threads.emplace(threadID, std::move(newThread));
         _threadNum ++;
     }
 }
 
-void ThreadPool::reduceThreadPool(uint32_t reduceNum) {
+void Thread_Pool::reduce_thread_pool(uint32_t reduceNum) {
     _destroyedThreadNum = reduceNum;
     for (int i {0}; i < reduceNum; i ++) {
         _taskCV.notify_one();
     }
 }
 
-void ThreadPool::initThreadPool() {
-    daemonThread = std::thread(&ThreadPool::daemonTask, this);
-    expendThreadPool(_minThread);
+void Thread_Pool::init_thread_pool() {
+    _daemon_thread = std::thread(&Thread_Pool::daemon_task, this);
+    expend_thread_pool(_minThread);
 }
 
-void ThreadPool::commit(const ThreadPool::Task &func, bool isIOTask) {
+void Thread_Pool::commit(const Thread_Pool::Task &func, bool isIOTask) {
     Handle handle;
     handle._task = func;
     handle._isIOTask = isIOTask;
 
-    std::unique_lock<std::mutex> guard{poolLock};
-    taskQueue.push(std::move(handle));
+    std::unique_lock<std::mutex> guard{_pool_lock};
+    _task_queue.push(std::move(handle));
     guard.unlock();
 
     _taskCV.notify_one();
 }
 
-void ThreadPool::stop() {
+void Thread_Pool::stop() {
     _isStop = true;
 }
 
-ThreadPool::~ThreadPool() {
+Thread_Pool::~Thread_Pool() {
     stop();
     _taskCV.notify_all();
 
-    daemonThread.join();
-    for (auto& i : threads) {
+    _daemon_thread.join();
+    for (auto& i : _threads) {
         i.second.join();
     }
 
-    while(!taskQueue.empty()) taskQueue.pop();
-    threads.clear();
+    while(!_task_queue.empty()) _task_queue.pop();
+    _threads.clear();
 
 
 }
 
-void ThreadPool::workTask() {
+void Thread_Pool::work_task() {
     while(true) {
-        std::unique_lock<std::mutex> guard(poolLock);
-        while(taskQueue.empty() && !_isStop) {
+        std::unique_lock<std::mutex> guard(_pool_lock);
+        while(_task_queue.empty() && !_isStop) {
             _taskCV.wait(guard);
             if (_destroyedThreadNum > 0) {
                 _destroyedThreadNum --;
-                threads[std::this_thread::get_id()].detach();
-                threads.erase(std::this_thread::get_id());
+                _threads[std::this_thread::get_id()].detach();
+                _threads.erase(std::this_thread::get_id());
                 _threadNum --;
                 return;
             }
@@ -133,8 +133,8 @@ void ThreadPool::workTask() {
             return;
         }
 
-        Handle task = std::move(taskQueue.front());
-        taskQueue.pop();
+        Handle task = std::move(_task_queue.front());
+        _task_queue.pop();
         _workingThreadNum ++;
         if (task._isIOTask) {
             _ioTaskNum ++;

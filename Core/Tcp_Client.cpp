@@ -2,7 +2,7 @@
 // Created by ghost-him on 8/10/24.
 //
 
-#include "TcpClient.h"
+#include "Tcp_Client.h"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -13,17 +13,17 @@
 #include <memory>
 #include <iostream>
 
-TcpClient::TcpClient(std::string_view addr, uint16_t port)
+Tcp_Client::Tcp_Client(std::string_view addr, uint16_t port)
         : _ip(addr), _port(port), _running(false)
 {
-    setSendMessageCallback([this](SocketChannelPtr channel){
-        std::unique_lock<std::mutex> sendGuard{channel->sendLock};
+    set_send_message_callback([this](SocketChannelPtr channel){
+        std::unique_lock<std::mutex> sendGuard{channel->_send_lock};
         if (!this->_running) {
             throw std::runtime_error("Client is not connected");
         }
 
-        while(channel->sendMessages.size()) {
-            auto message = channel->sendMessages.front_pop();
+        while(channel->_send_messages.size()) {
+            auto message = channel->_send_messages.front_pop();
             ssize_t bytes_sent = ::send(_fd, message->data(), message->size(), MSG_NOSIGNAL);
             if (bytes_sent == -1) {
                 throw std::system_error(errno, std::generic_category(), "Failed to send data");
@@ -33,7 +33,7 @@ TcpClient::TcpClient(std::string_view addr, uint16_t port)
     });
 }
 
-void TcpClient::run() {
+void Tcp_Client::run() {
     _fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (_fd == -1) {
         throw std::system_error(errno, std::generic_category(), "Failed to create socket");
@@ -56,14 +56,14 @@ void TcpClient::run() {
     setsockopt(_fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int));
 
     _running = true;
-    _channel = std::make_shared<SocketChannel>(_fd, dynamic_cast<Network*>(this));
+    _channel = std::make_shared<Socket_Channel>(_fd, dynamic_cast<Network*>(this));
     _channel->set_compress_algo(_compressionType);
     _executor([this](){
-        this->readData();
+        this->read_data();
     });
 }
 
-void TcpClient::disconnect() {
+void Tcp_Client::disconnect() {
     if (_fd != -1) {
         close(_fd);
         _fd = -1;
@@ -71,21 +71,21 @@ void TcpClient::disconnect() {
     _running = false;
 }
 
-void TcpClient::sendMessage(std::string_view data) {
+void Tcp_Client::send_message(std::string_view data) {
     std::span<const std::byte> byte_span(
             reinterpret_cast<const std::byte*>(data.data()),
             data.size()
     );
-    _channel->writeData(byte_span);
+    _channel->write_data(byte_span);
 }
 
-void TcpClient::readData() {
+void Tcp_Client::read_data() {
     std::array<std::byte, BUFFER_SIZE> buffer;
     while(true) {
         if (!_running) {
             break;
         }
-        ssize_t n = read(_channel->fd, buffer.data(), BUFFER_SIZE);
+        ssize_t n = read(_channel->_fd, buffer.data(), BUFFER_SIZE);
         if (n == 0) {
             // 连接关闭
             disconnect();
@@ -96,12 +96,12 @@ void TcpClient::readData() {
             break;
         }
         if (n > 0) {
-            _channel->readBuffer.enqueue(buffer.begin(), buffer.begin() + n);
-            this->_channel->parseMessage();
+            _channel->_read_buffer.enqueue(buffer.begin(), buffer.begin() + n);
+            this->_channel->parse_message();
         }
     }
 }
 
-void TcpClient::stop() {
+void Tcp_Client::stop() {
     _running = false;
 }

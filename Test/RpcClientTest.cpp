@@ -2,19 +2,19 @@
 // Created by ghost-him on 8/11/24.
 //
 #include "gtest/gtest.h"
-#include "../RPC/RpcClient.h"
+#include "../RPC/Rpc_Client.h"
 
 TEST(RpcClientTest, testRPCStruct) {
-    DataStream ds;
+    Data_Stream ds;
     RPCResponse response;
-    DataStream ans;
+    Data_Stream ans;
     ans << 1;
     response.error = "123";
     response.result = ans;
     response.id = "1.23";
     ds << response;
 
-    DataStream recv;
+    Data_Stream recv;
     recv.load({ds.data().data(), ds.data().size()});
 
     RPCResponse recv_response;
@@ -24,7 +24,7 @@ TEST(RpcClientTest, testRPCStruct) {
 }
 
 TEST(RpcClientTest, initTest) {
-    RpcClient client("127.0.0.1", 23333);
+    Rpc_Client client("127.0.0.1", 23333);
     client.run();
     int res = client.call<int>("add", 1, 2);
     std::cerr << "res : " << res << std::endl;
@@ -40,7 +40,7 @@ TEST(RpcClientTest, initTest) {
 }
 
 TEST(RpcClientTest, executeTimeConsumingTask) {
-    RpcClient client("127.0.0.1", 23333);
+    Rpc_Client client("127.0.0.1", 23333);
     client.run();
     std::cerr << "time consuming task ask:" << std::endl;
     int res = client.call<int>("add", 1, 2);
@@ -63,7 +63,7 @@ public:
 };
 
 TEST(RpcClientTest, testCustomClass) {
-    RpcClient client("127.0.0.1", 23333);
+    Rpc_Client client("127.0.0.1", 23333);
     client.run();
     myClass a, b;
     a.a = 10;
@@ -78,8 +78,8 @@ TEST(RpcClientTest, testCustomClass) {
 }
 
 TEST(RpcClientTest, testCompression) {
-    RpcClient client("127.0.0.1", 23333);
-    client.set_compress_algo(CompressionType::Brotli);
+    Rpc_Client client("127.0.0.1", 23333);
+    client.set_compress_algo(Compression_Type::Brotli);
     client.run();
     int res = client.call<int>("add", 1, 2);
     std::cerr << "res : " << res << std::endl;
@@ -89,7 +89,7 @@ TEST(RpcClientTest, testCompression) {
 }
 
 TEST(RpcClientTest, testMemberFunc) {
-    RpcClient client("127.0.0.1", 23333);
+    Rpc_Client client("127.0.0.1", 23333);
     client.run();
     while(1) {
         std::cout << client.call<int32_t>("requestID") << std::endl;
@@ -100,9 +100,9 @@ TEST(RpcClientTest, testMemberFunc) {
 
 TEST(RpcClientTest, testHeartbeat) {
     // 该测试需要在源码中删除部分代码来测试：
-    // RPC/RpcClient.cpp 第39-41行代码，该代码为定时器，用于向服务器发出心跳。
+    // RPC/Rpc_Client.cpp 第39-41行代码，该代码为定时器，用于向服务器发出心跳。
     // 服务器运行 TEST (RpcServerTest, initTest)
-    RpcClient client("127.0.0.1", 23333);
+    Rpc_Client client("127.0.0.1", 23333);
     client.run();
 
     std::this_thread::sleep_for(std::chrono::seconds(1));

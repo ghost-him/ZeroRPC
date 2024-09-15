@@ -29,7 +29,7 @@ std::vector<std::byte> Brotli::compress(const std::span<const std::byte> &data) 
     return compressed;
 }
 
-std::vector<std::byte> Brotli::decompress(const std::span<const std::byte> &compressedData) {
+std::vector<std::byte> Brotli::decompress(const std::span<const std::byte> &compressed_data) {
     size_t decoded_size = 0;
     std::vector<std::byte> decompressed;
 
@@ -39,8 +39,8 @@ std::vector<std::byte> Brotli::decompress(const std::span<const std::byte> &comp
     }
 
     BrotliDecoderResult result;
-    const uint8_t* next_in = reinterpret_cast<const uint8_t*>(compressedData.data());
-    size_t available_in = compressedData.size();
+    const uint8_t* next_in = reinterpret_cast<const uint8_t*>(compressed_data.data());
+    size_t available_in = compressed_data.size();
 
     do {
         size_t available_out = decompressed.size() - decoded_size;

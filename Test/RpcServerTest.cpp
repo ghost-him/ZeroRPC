@@ -2,8 +2,8 @@
 // Created by ghost-him on 8/11/24.
 //
 #include "gtest/gtest.h"
-#include "../RPC/RpcServer.h"
-#include "../RPC/FunctionHandler.hpp"
+#include "../RPC/Rpc_Server.h"
+#include "../RPC/Function_Handler.hpp"
 
 
 int add(int a, int b) {
@@ -20,10 +20,10 @@ std::string testPargsOrder(int a, std::string b) {
 }
 
 TEST (RpcServerTest, initTest) {
-    RpcServer server(23333);
-    server.registerMethod("add", add);
-    server.registerMethod("append", append);
-    server.registerMethod("pargOrder", testPargsOrder);
+    Rpc_Server server(23333);
+    server.register_method("add", add);
+    server.register_method("append", append);
+    server.register_method("pargOrder", testPargsOrder);
     server.run();
 }
 
@@ -34,8 +34,8 @@ int add2(int a, int b) {
 }
 
 TEST (RpcServerTest, executeTimeConsumingTask) {
-    RpcServer server(23333);
-    server.registerMethod("add", add2);
+    Rpc_Server server(23333);
+    server.register_method("add", add2);
     server.run();
 }
 
@@ -56,15 +56,15 @@ myClass add4(myClass a, myClass b) {
 }
 
 TEST (RpcServerTest, customClass) {
-    RpcServer server(23333);
-    server.registerMethod("add4", add4);
+    Rpc_Server server(23333);
+    server.register_method("add4", add4);
     server.run();
 }
 
 TEST (RpcServerText, testCompression) {
-    RpcServer server(23333);
-    server.set_compress_algo(CompressionType::Brotli);
-    server.registerMethod("add", add);
+    Rpc_Server server(23333);
+    server.set_compress_algo(Compression_Type::Brotli);
+    server.register_method("add", add);
     server.run();
 }
 
@@ -78,9 +78,9 @@ private:
 };
 
 TEST (RpcServerTest, testMemberFunc) {
-    RpcServer server(23333);
+    Rpc_Server server(23333);
     Generator gen;
-    server.registerMethod("requestID", [&](){
+    server.register_method("requestID", [&]() {
         return gen.get_new_id();
     });
     server.run();

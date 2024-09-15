@@ -2,19 +2,19 @@
 // Created by ghost-him on 8/11/24.
 //
 
-#include "RpcClient.h"
+#include "Rpc_Client.h"
 
 
-RpcClient::RpcClient(std::string_view host, uint16_t port)
+Rpc_Client::Rpc_Client(std::string_view host, uint16_t port)
 : _tcpClient(host, port){
-    _thread_pool = &Singleton<ThreadPool>::getInstance();
-    _tcpClient.setExecutor([this](std::function<void()> func){
+    _thread_pool = &Singleton<Thread_Pool>::getInstance();
+    _tcpClient.set_executor([this](std::function<void()> func) {
         this->_thread_pool->commit(func, false);
     });
 
-    _tcpClient.setReadMessageCallback([this](SocketChannelPtr channel, DataPtr data){
-        DataStream response_buf;
-        response_buf.load({(char*)data->data(), data->size()});
+    _tcpClient.set_read_message_callback([this](SocketChannelPtr channel, DataPtr data) {
+        Data_Stream response_buf;
+        response_buf.load({(char *) data->data(), data->size()});
 
         RPCResponse response;
         response_buf >> response;
@@ -31,32 +31,32 @@ RpcClient::RpcClient(std::string_view host, uint16_t port)
         }
     });
 
-    _timer.setExecutor([this](std::function<void()> func){
+    _timer.set_executor([this](std::function<void()> func) {
         this->_thread_pool->commit(func, false);
     });
 
-    _timer.setPeriodicTimer([this](){
+    _timer.set_periodic_timer([this]() {
         this->heartbeat_signal();
-        }, std::chrono::seconds(HEARTBEAT_REPEAT_TIME));
+    }, std::chrono::seconds(HEARTBEAT_REPEAT_TIME));
 
 }
 
-void RpcClient::run() {
+void Rpc_Client::run() {
     _tcpClient.run();
     this->_thread_pool->commit([this](){
         _timer.run();
     }, false);
 }
 
-void RpcClient::set_compress_algo(CompressionType type) {
+void Rpc_Client::set_compress_algo(Compression_Type type) {
     this->_compressionType = type;
 }
 
-void RpcClient::heartbeat_signal() {
+void Rpc_Client::heartbeat_signal() {
     this->call<void>(HEARTBEAT_SIG);
 }
 
-RpcClient::~RpcClient() {
+Rpc_Client::~Rpc_Client() {
     // todo
     _tcpClient.stop();
     _timer.stop();

@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "RpcUser.h"
+#include "Rpc_User.h"
 #include <unordered_map>
 #include <vector>
 #include <memory>
 #include <mutex>
 
-class RpcUserManager {
+class Rpc_User_Manager {
 public:
     void create_user(int fd);
 
@@ -21,7 +21,7 @@ public:
     std::vector<int> check_invalid_user();
 
 private:
-    std::unordered_map<int, std::shared_ptr<RpcUser>> _userStore;
-    std::mutex lock;
+    std::unordered_map<int, std::shared_ptr<Rpc_User>> _user_store;
+    std::mutex _lock;
 };
 

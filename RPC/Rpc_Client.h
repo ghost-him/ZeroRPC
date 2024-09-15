@@ -3,55 +3,56 @@
 //
 
 #pragma once
-#include "../Core/TcpClient.h"
-#include "RpcPackage.h"
+#include "../Core/Tcp_Client.h"
+#include "Rpc_Package.h"
 #include "../Core/Timer.h"
 #include <future>
-#include "../Core/ThreadPool.h"
-#include "../Common/IDGenertor.hpp"
+#include "../Core/Thread_Pool.h"
+#include "../Common/ID_Genertor.hpp"
 #include "../Common/prg_cfg.hpp"
+#include "../Core/Data_Stream.h"
 
-struct RpcStatus: public enable_serializable {
+struct Rpc_Status: public enable_serializable {
     int clientID;
     std::string token; // 用于身份验证，长度为16字节
 
     SERIALIZE(clientID, token)
 };
 
-class RpcClient {
+class Rpc_Client {
 public:
-    RpcClient(std::string_view host, uint16_t port);
+    Rpc_Client(std::string_view host, uint16_t port);
 
-    ~RpcClient();
+    ~Rpc_Client();
 
     template<typename Ret, typename... Args>
     Ret call(const std::string& method, Args&&... args);
 
     void run();
 
-    void set_compress_algo(CompressionType type);
+    void set_compress_algo(Compression_Type type);
 
 private:
 
     void heartbeat_signal();
 
-    CompressionType _compressionType {CompressionType::None};
-    ThreadPool* _thread_pool;
-    TcpClient _tcpClient;
+    Compression_Type _compressionType {Compression_Type::None};
+    Thread_Pool* _thread_pool;
+    Tcp_Client _tcpClient;
 
     std::mutex _hash_lock;
-    std::unordered_map<std::string, std::promise<DataStream>> _pending_request;
+    std::unordered_map<std::string, std::promise<Data_Stream>> _pending_request;
 
     Timer _timer;
     // 客户端的身份信息
-    RpcStatus _status;
+    Rpc_Status _status;
 };
 
 template<typename Ret, typename... Args>
-Ret RpcClient::call(const std::string &method, Args&&... args) {
+Ret Rpc_Client::call(const std::string &method, Args&&... args) {
     RPCRequest request;
     request.method = method;
-    DataStream ds;
+    Data_Stream ds;
     if constexpr (sizeof...(Args) > 0) {
         auto tuple = std::forward_as_tuple(std::forward<Args>(args)...);
         constexpr auto size = sizeof...(Args);
@@ -62,19 +63,19 @@ Ret RpcClient::call(const std::string &method, Args&&... args) {
     request.params = ds;
     request.id = generate_uuid();
 
-    DataStream request_buf;
+    Data_Stream request_buf;
     request_buf << request;
 
-    std::promise<DataStream> response_promise;
+    std::promise<Data_Stream> response_promise;
     auto future = response_promise.get_future();
     {
         std::unique_lock<std::mutex> guard{_hash_lock};
         _pending_request[request.id] = std::move(response_promise);
     }
 
-    _tcpClient.sendMessage({request_buf.data().data(), request_buf.data().size()});
+    _tcpClient.send_message({request_buf.data().data(), request_buf.data().size()});
 
-    DataStream result_buf = future.get();
+    Data_Stream result_buf = future.get();
 
     if constexpr (!std::is_void_v<Ret>) {
         Ret result;

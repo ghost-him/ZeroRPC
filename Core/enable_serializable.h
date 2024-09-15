@@ -4,28 +4,28 @@
 
 #pragma once
 
-class DataStream;
+class Data_Stream;
 
 class enable_serializable {
 public:
-    virtual void serialize(DataStream &stream) const = 0;
+    virtual void serialize(Data_Stream &stream) const = 0;
 
-    virtual bool deserialize(DataStream &stream) = 0;
+    virtual bool deserialize(Data_Stream &stream) = 0;
 };
 
 #define SERIALIZE(...) \
-    void serialize(DataStream & stream) const \
+    void serialize(Data_Stream & stream) const \
     {                  \
-        char type = DataStream::CUSTOM;       \
+        char type = Data_Stream::CUSTOM;       \
         stream.write_memory(reinterpret_cast<char*>(&type), sizeof(char)); \
         stream.write_args(__VA_ARGS__);\
     }\
 \
-    bool deserialize(DataStream & stream)     \
+    bool deserialize(Data_Stream & stream)     \
     {                  \
         char type;\
         stream.read_memory(reinterpret_cast<char*>(&type), sizeof(char));     \
-        if (type != DataStream::CUSTOM) {     \
+        if (type != Data_Stream::CUSTOM) {     \
             return false;               \
         }              \
         stream.read_args(__VA_ARGS__);        \

@@ -3,11 +3,11 @@
 //
 
 #include "gtest/gtest.h"
-#include "../Core/DataStream.h"
+#include "../Core/Data_Stream.h"
 
 
 TEST(DataStreamTest, testInit) {
-    DataStream ds;
+    Data_Stream ds;
 
     int a1{1}, a2;
     bool b1{true}, b2;
@@ -23,7 +23,7 @@ TEST(DataStreamTest, testInit) {
 }
 
 TEST(DataStreamTest, testPlainText) {
-    DataStream ds;
+    Data_Stream ds;
     const char* str = "hello";
     ds << str;
     std::string b;
@@ -33,7 +33,7 @@ TEST(DataStreamTest, testPlainText) {
 }
 
 TEST(DataStreamTest, testVec) {
-    DataStream ds;
+    Data_Stream ds;
     std::vector<std::string> a1, a2;
     a1 = {"hello", "world"};
     ds << a1;
@@ -42,7 +42,7 @@ TEST(DataStreamTest, testVec) {
 }
 
 TEST(DataStreamTest, testSet) {
-    DataStream ds;
+    Data_Stream ds;
     std::set<std::string> a1, a2;
     a1 = {"hello", "world"};
     ds << a1;
@@ -51,7 +51,7 @@ TEST(DataStreamTest, testSet) {
 }
 
 TEST(DataStreamTest, testList) {
-    DataStream ds;
+    Data_Stream ds;
     std::list<std::string> a1, a2;
     a1 = {"hello", "world"};
     ds << a1;
@@ -79,7 +79,7 @@ public:
 };
 
 TEST(DataStreamTest, testCustom) {
-    DataStream ds;
+    Data_Stream ds;
     myclass a;
 
     a.a = 1;
@@ -96,7 +96,7 @@ TEST(DataStreamTest, testCustom) {
 }
 
 TEST(DataStreamTest, testUnorderedContainer1) {
-    DataStream ds;
+    Data_Stream ds;
     std::unordered_set<std::string> a, b;
     a.insert("hello");
     a.insert("world");
@@ -107,7 +107,7 @@ TEST(DataStreamTest, testUnorderedContainer1) {
 }
 
 TEST(DataStreamTest, testUnorderedContainer2) {
-    DataStream ds;
+    Data_Stream ds;
     std::unordered_map<std::string, bool> a, b;
     a["hello"] = true;
     a["world"] = false;
@@ -118,15 +118,15 @@ TEST(DataStreamTest, testUnorderedContainer2) {
 }
 
 template<typename ...Args>
-DataStream test(Args ... args) {
-    DataStream ds;
+Data_Stream test(Args ... args) {
+    Data_Stream ds;
     ds.write_args(args...);
 
     return ds;
 }
 
 TEST(DataStreamTest, testSelf) {
-    DataStream ds = test("hello", true, false, 'c', 5);
+    Data_Stream ds = test("hello", true, false, 'c', 5);
     auto& c = ds.data();
     std::cout << c.size()<< std::endl;
     for (int i = 0; i < c.size(); i ++) {

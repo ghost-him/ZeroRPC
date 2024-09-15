@@ -7,25 +7,26 @@
 
 #include <functional>
 #include <tuple>
-#include "../Core/DataStream.h"
+#include "../Core/Data_Stream.h"
 #include <any>
+#include <optional>
 
-class HandlerBase {
+class Handler_Base {
 public:
-    virtual ~HandlerBase() = default;
-    virtual DataStream call(DataStream inArgs) = 0;
+    virtual ~Handler_Base() = default;
+    virtual Data_Stream call(Data_Stream inArgs) = 0;
 };
 
 
 template<typename Ret, typename... Args>
-class FunctionHandler : public HandlerBase {
+class Function_Handler : public Handler_Base {
 public:
-    FunctionHandler(std::function<Ret(Args...)> func) : func(func) {}
+    Function_Handler(std::function<Ret(Args...)> func) : func(func) {}
 
-    DataStream call(DataStream inArgs) override {
+    Data_Stream call(Data_Stream inArgs) override {
         auto args = inArgs.get_args<Args...>();
         Ret ret = std::apply(func, args);
-        DataStream result;
+        Data_Stream result;
         result << ret;
         return result;
     }
@@ -36,11 +37,11 @@ private:
 
 // 针对void返回类型的特化实现
 template<typename... Args>
-class FunctionHandler<void, Args...> : public HandlerBase {
+class Function_Handler<void, Args...> : public Handler_Base {
 public:
-    FunctionHandler(std::function<void(Args...)> func) : func(func) {}
+    Function_Handler(std::function<void(Args...)> func) : func(func) {}
 
-    DataStream call(DataStream inArgs) override {
+    Data_Stream call(Data_Stream inArgs) override {
         auto args = inArgs.get_args<Args...>();
         std::apply(func, args);  // 调用函数，但不处理返回值
         return {};  // 对于void类型，返回一个空的DataStream
@@ -50,19 +51,19 @@ private:
     std::function<void(Args...)> func;
 };
 
-class HandlerManager {
+class Handler_Manager {
 public:
     template<typename Ret, typename ... Args>
     void registerHandler(std::string_view name, std::function<Ret(Args...)> func) {
-        handlers[std::move(std::string(name))] = std::make_any<std::shared_ptr<HandlerBase>>(
-                std::make_shared<FunctionHandler<Ret, Args...>>(func)
+        handlers[std::move(std::string(name))] = std::make_any<std::shared_ptr<Handler_Base>>(
+                std::make_shared<Function_Handler<Ret, Args...>>(func)
         );
     }
 
-    std::optional<DataStream> call(const std::string& name, DataStream args) {
+    std::optional<Data_Stream> call(const std::string& name, Data_Stream args) {
         auto it = handlers.find(name);
         if (it != handlers.end()) {
-            auto handlerPtr = std::any_cast<std::shared_ptr<HandlerBase>>(it->second);
+            auto handlerPtr = std::any_cast<std::shared_ptr<Handler_Base>>(it->second);
             return handlerPtr->call(args);
         }
         throw std::runtime_error("Handler not found");

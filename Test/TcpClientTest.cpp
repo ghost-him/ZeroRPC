@@ -1,31 +1,31 @@
 //
 // Created by ghost-him on 8/10/24.
 //
-#include "../Core/TcpClient.h"
+#include "../Core/Tcp_Client.h"
 #include "gtest/gtest.h"
 #include <stdexcept>
-#include "../Core/ThreadPool.h"
+#include "../Core/Thread_Pool.h"
 #include "../Core/Timer.h"
 
 TEST(ClientTest, run) {
 
     try {
-        ThreadPool& pool = THREADPOOL;
+        Thread_Pool& pool = THREADPOOL;
 
         Timer timer;
-        timer.setExecutor([](std::function<void()> function){
-            ThreadPool& pool = THREADPOOL;
+        timer.set_executor([](std::function<void()> function){
+            Thread_Pool& pool = THREADPOOL;
             pool.commit(function, true);
         });
 
-        TcpClient ms("127.0.0.1", 23333);
+        Tcp_Client ms("127.0.0.1", 23333);
 
-        ms.setExecutor([](std::function<void()> function){
-            ThreadPool& pool = THREADPOOL;
+        ms.set_executor([](std::function<void()> function){
+            Thread_Pool& pool = THREADPOOL;
             pool.commit(function, true);
         });
 
-        ms.setReadMessageCallback([](SocketChannelPtr channel, DataPtr ptr){
+        ms.set_read_message_callback([](SocketChannelPtr channel, DataPtr ptr){
             std::cerr << "receive new message : ";
             for (const auto& byte : (*ptr)) {
                 char c = static_cast<char>(byte);
@@ -33,12 +33,12 @@ TEST(ClientTest, run) {
             }
             std::cout << std::endl;
         });
-        ms.set_compress_algo(CompressionType::Brotli);
+        ms.set_compress_algo(Compression_Type::Brotli);
         ms.run();
 
-        timer.setPeriodicTimer([&](){
+        timer.set_periodic_timer([&](){
             std::cerr << "send message!" << std::endl;
-            ms.sendMessage("hello!");
+            ms.send_message("hello!");
         }, std::chrono::seconds(2));
 
         timer.run();

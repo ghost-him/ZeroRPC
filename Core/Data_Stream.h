@@ -58,9 +58,9 @@ concept CompositeType =
 template<typename T>
 concept SupportedDataTypes = AtomicType<T> || CompositeType<T>;
 
-class DataStream : public enable_serializable {
+class Data_Stream : public enable_serializable {
 public:
-    enum DataType {
+    enum Data_Type {
         BOOL = 0,
         CHAR,
         INT32,
@@ -75,8 +75,8 @@ public:
         CUSTOM
     };
 
-    DataStream() : _pos{0} { is_big_endian = std::endian::native == std::endian::big; }
-    ~DataStream(){}
+    Data_Stream() : _pos{0} { is_big_endian = std::endian::native == std::endian::big; }
+    ~Data_Stream() = default;
 
     bool read_memory(char * data, uint32_t len);
     bool read(bool & value);
@@ -142,14 +142,14 @@ public:
     void write_args(const T& value, const Args&... args);
 
     template<SupportedDataTypes T>
-    DataStream & operator << (const T& value);
+    Data_Stream & operator << (const T& value);
 
-    DataStream & operator<<(const char* value);
+    Data_Stream & operator<<(const char* value);
 
     template<SupportedDataTypes T>
-    DataStream & operator >> (T& value);
+    Data_Stream & operator >> (T& value);
 
-    //DataStream & operator >> (std::string& value);
+    //Data_Stream & operator >> (std::string& value);
 
     [[nodiscard]] const std::vector<char>& data() const;
 
@@ -171,32 +171,32 @@ private:
 };
 
 template<SupportedDataTypes... Args>
-std::tuple<Args...> DataStream::get_args() {
+std::tuple<Args...> Data_Stream::get_args() {
     return std::tuple<Args...>(get<Args>()...);
 }
 
 template<SupportedDataTypes T>
-T DataStream::get() {
+T Data_Stream::get() {
     T value;
     read(value);
     return value;
 }
 
 template<SupportedDataTypes T>
-DataStream &DataStream::operator<<(const T& value) {
+Data_Stream &Data_Stream::operator<<(const T& value) {
     write(value);
     return *this;
 }
 
 template<SupportedDataTypes T>
-DataStream & DataStream::operator >> (T& value) {
+Data_Stream & Data_Stream::operator >> (T& value) {
     read(value);
     return *this;
 }
 
 template<SupportedDataTypes T>
-void DataStream::write(const std::vector<T> &value) {
-    char type = DataType::VECTOR;
+void Data_Stream::write(const std::vector<T> &value) {
+    char type = Data_Type::VECTOR;
     write_memory(reinterpret_cast<char*>(&type), sizeof(char));
     int len = value.size();
     write(len);
@@ -206,8 +206,8 @@ void DataStream::write(const std::vector<T> &value) {
 }
 
 template<SupportedDataTypes T>
-void DataStream::write(const std::list<T> &value) {
-    char type = DataType::LIST;
+void Data_Stream::write(const std::list<T> &value) {
+    char type = Data_Type::LIST;
     write_memory(reinterpret_cast<char*>(&type), sizeof(char));
     int len = value.size();
     write(len);
@@ -217,8 +217,8 @@ void DataStream::write(const std::list<T> &value) {
 }
 
 template<SupportedDataTypes T>
-bool DataStream::read(std::list<T> &value) {
-    if (_buf[_pos] != DataType::LIST) {
+bool Data_Stream::read(std::list<T> &value) {
+    if (_buf[_pos] != Data_Type::LIST) {
         return false;
     }
     value.clear();
@@ -235,8 +235,8 @@ bool DataStream::read(std::list<T> &value) {
 }
 
 template<SupportedDataTypes T>
-bool DataStream::read(std::vector<T> &value) {
-    if (_buf[_pos] != DataType::VECTOR) {
+bool Data_Stream::read(std::vector<T> &value) {
+    if (_buf[_pos] != Data_Type::VECTOR) {
         return false;
     }
     value.clear();
@@ -253,8 +253,8 @@ bool DataStream::read(std::vector<T> &value) {
 }
 
 template<SupportedDataTypes T>
-void DataStream::write(const std::set<T> &value) {
-    char type = DataType::SET;
+void Data_Stream::write(const std::set<T> &value) {
+    char type = Data_Type::SET;
     write_memory(reinterpret_cast<char*>(&type), sizeof(char));
     int len = value.size();
     write(len);
@@ -264,8 +264,8 @@ void DataStream::write(const std::set<T> &value) {
 }
 
 template<SupportedDataTypes K, SupportedDataTypes V>
-void DataStream::write(const std::map<K, V> &value) {
-    char type = DataType::MAP;
+void Data_Stream::write(const std::map<K, V> &value) {
+    char type = Data_Type::MAP;
     write_memory(reinterpret_cast<char*>(&type), sizeof(char));
     int len = value.size();
     write(len);
@@ -276,8 +276,8 @@ void DataStream::write(const std::map<K, V> &value) {
 }
 
 template<SupportedDataTypes T>
-bool DataStream::read(std::set<T> &value) {
-    if (_buf[_pos] != DataType::SET) {
+bool Data_Stream::read(std::set<T> &value) {
+    if (_buf[_pos] != Data_Type::SET) {
         return false;
     }
 
@@ -293,8 +293,8 @@ bool DataStream::read(std::set<T> &value) {
 }
 
 template<SupportedDataTypes K, SupportedDataTypes V>
-bool DataStream::read(std::map<K, V> &value) {
-    if (_buf[_pos] != DataType::MAP) {
+bool Data_Stream::read(std::map<K, V> &value) {
+    if (_buf[_pos] != Data_Type::MAP) {
         return false;
     }
 
@@ -312,7 +312,7 @@ bool DataStream::read(std::map<K, V> &value) {
 }
 
 template<SupportedDataTypes T, SupportedDataTypes... Args>
-bool DataStream::read_args(T &value, Args &... args) {
+bool Data_Stream::read_args(T &value, Args &... args) {
     if (!read(value)) {
         return false;
     }
@@ -323,7 +323,7 @@ bool DataStream::read_args(T &value, Args &... args) {
 }
 
 template<SupportedDataTypes T, SupportedDataTypes... Args>
-void DataStream::write_args(const T &value, const Args &... args) {
+void Data_Stream::write_args(const T &value, const Args &... args) {
     write(value);
     if constexpr (sizeof...(args) > 0) {
         write_args(args...);
@@ -331,8 +331,8 @@ void DataStream::write_args(const T &value, const Args &... args) {
 }
 
 template<SupportedDataTypes T>
-bool DataStream::read(std::unordered_set<T> &value) {
-    if (_buf[_pos] != DataType::SET) {
+bool Data_Stream::read(std::unordered_set<T> &value) {
+    if (_buf[_pos] != Data_Type::SET) {
         return false;
     }
 
@@ -348,8 +348,8 @@ bool DataStream::read(std::unordered_set<T> &value) {
 }
 
 template<SupportedDataTypes K, SupportedDataTypes V>
-bool DataStream::read(std::unordered_map<K, V> &value) {
-    if (_buf[_pos] != DataType::MAP) {
+bool Data_Stream::read(std::unordered_map<K, V> &value) {
+    if (_buf[_pos] != Data_Type::MAP) {
         return false;
     }
 
@@ -367,8 +367,8 @@ bool DataStream::read(std::unordered_map<K, V> &value) {
 }
 
 template<SupportedDataTypes T>
-void DataStream::write(const std::unordered_set<T> &value) {
-    char type = DataType::SET;
+void Data_Stream::write(const std::unordered_set<T> &value) {
+    char type = Data_Type::SET;
     write_memory(reinterpret_cast<char*>(&type), sizeof(char));
     int len = value.size();
     write(len);
@@ -378,8 +378,8 @@ void DataStream::write(const std::unordered_set<T> &value) {
 }
 
 template<SupportedDataTypes K, SupportedDataTypes V>
-void DataStream::write(const std::unordered_map<K, V> &value) {
-    char type = DataType::MAP;
+void Data_Stream::write(const std::unordered_map<K, V> &value) {
+    char type = Data_Type::MAP;
     write_memory(reinterpret_cast<char*>(&type), sizeof(char));
     int len = value.size();
     write(len);

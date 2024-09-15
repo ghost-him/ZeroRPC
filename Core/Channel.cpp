@@ -3,73 +3,73 @@
 //
 
 #include "Channel.h"
-#include "TcpServer.h"
+#include "Tcp_Server.h"
 #include <cstring>
 
-SocketChannel::SocketChannel(int fd, Network* server)
-:fd{fd}, server{server}, readBufferLength{0} {
+Socket_Channel::Socket_Channel(int fd, Network* server)
+: _fd{fd}, _server{server}, _read_buffer_length{0} {
 
 }
 
-bool SocketChannel::writeData(std::span<const std::byte> data) {
-    const auto& encoded_data = encodeString(data);
+bool Socket_Channel::write_data(std::span<const std::byte> data) {
+    const auto& encoded_data = encode_string(data);
     DataPtr ptr = std::make_shared<std::vector<std::byte>>(encoded_data.size() + HEAD_LENGTH);
     auto memHead = variant2mem<int32_t>(encoded_data.size());
     memcpy(ptr->data(), memHead.data(), HEAD_LENGTH);
     memcpy(ptr->data() + HEAD_LENGTH, encoded_data.data(), encoded_data.size());
 
-    sendMessages.push(ptr);
-    server->_onSendMessage(shared_from_this());
+    _send_messages.push(ptr);
+    _server->_on_send_message(shared_from_this());
 
     return true;
 }
 
-void SocketChannel::parseMessage() {
+void Socket_Channel::parse_message() {
     while(1) {
-        if (readBufferLength == 0) {
-            if (readBuffer.size() > HEAD_LENGTH) {
+        if (_read_buffer_length == 0) {
+            if (_read_buffer.size() > HEAD_LENGTH) {
                 //表明当前已经有一个用于存放长度的值
                 std::array<std::byte, HEAD_LENGTH> temp;
-                readBuffer.dequeue(temp.begin(), HEAD_LENGTH);
-                readBufferLength = mem2variant<int32_t>(temp);
+                _read_buffer.dequeue(temp.begin(), HEAD_LENGTH);
+                _read_buffer_length = mem2variant<int32_t>(temp);
             } else {
                 break;
             }
         }
 
-        if (readBuffer.size() >= readBufferLength) {
+        if (_read_buffer.size() >= _read_buffer_length) {
             std::array<std::byte, BUFFER_SIZE> tempBuffer;
-            auto data_len = readBufferLength;
-            readBuffer.dequeue(tempBuffer.begin(), data_len);
-            readBufferLength = 0;
+            auto data_len = _read_buffer_length;
+            _read_buffer.dequeue(tempBuffer.begin(), data_len);
+            _read_buffer_length = 0;
 
             // 后处理
             DataPtr newData = std::make_shared<std::vector<std::byte>>(
-                    decodeString({tempBuffer.begin(), tempBuffer.begin() + data_len})
+                    decode_string({tempBuffer.begin(), tempBuffer.begin() + data_len})
                     );
-            readMessages.push(std::move(newData));
+            _read_messages.push(std::move(newData));
         }
     }
-    while (!readMessages.empty()) {
-        auto DataPtr = readMessages.front_pop();
-        if (server->_onReadMessage) {
-            server->_onReadMessage(shared_from_this(), DataPtr);
+    while (!_read_messages.empty()) {
+        auto DataPtr = _read_messages.front_pop();
+        if (_server->_on_read_message) {
+            _server->_on_read_message(shared_from_this(), DataPtr);
         }
     }
 }
 
 
-std::vector<std::byte> SocketChannel::encodeString(const std::span<const std::byte> &plain_string) {
+std::vector<std::byte> Socket_Channel::encode_string(const std::span<const std::byte> &plain_string) {
     std::vector<std::byte> ret;
     Compression* alg;
-    switch(compressionType) {
-        case CompressionType::None: {
-            ret.push_back(static_cast<std::byte>(CompressionType::None));
+    switch(_compressionType) {
+        case Compression_Type::None: {
+            ret.push_back(static_cast<std::byte>(Compression_Type::None));
             alg = nullptr;
             break;
         }
-        case CompressionType::Brotli: {
-            ret.push_back(static_cast<std::byte>(CompressionType::Brotli));
+        case Compression_Type::Brotli: {
+            ret.push_back(static_cast<std::byte>(Compression_Type::Brotli));
             alg = new Brotli();
             break;
         }
@@ -89,15 +89,15 @@ std::vector<std::byte> SocketChannel::encodeString(const std::span<const std::by
     return ret;
 }
 
-std::vector<std::byte> SocketChannel::decodeString(const std::span<const std::byte> &encoded_string) {
+std::vector<std::byte> Socket_Channel::decode_string(const std::span<const std::byte> &encoded_string) {
     std::vector<std::byte> ret;
     Compression* alg;
-    switch (static_cast<CompressionType>(encoded_string[0])) {
-        case CompressionType::None: {
+    switch (static_cast<Compression_Type>(encoded_string[0])) {
+        case Compression_Type::None: {
             alg = nullptr;
             break;
         }
-        case CompressionType::Brotli: {
+        case Compression_Type::Brotli: {
             alg = new Brotli;
             break;
         }
@@ -120,10 +120,10 @@ std::vector<std::byte> SocketChannel::decodeString(const std::span<const std::by
     return ret;
 }
 
-void SocketChannel::set_compress_algo(CompressionType type) {
-    this->compressionType = type;
+void Socket_Channel::set_compress_algo(Compression_Type type) {
+    this->_compressionType = type;
 }
 
-int SocketChannel::getFd() {
-    return this->fd;
+int Socket_Channel::get_fd() {
+    return this->_fd;
 }

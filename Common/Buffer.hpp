@@ -96,7 +96,7 @@ namespace Common {
     void Common::Buffer<T, Capacity>::dequeue(It out, std::size_t count) {
         std::unique_lock<std::mutex> guard{_lock};
         if (count > _size) {
-            throw std::runtime_error("Not enough elements in queue");
+            throw std::runtime_error("Not enough elements in _queue");
         }
 
         if constexpr (std::is_trivially_copyable_v<T>) {
