@@ -28,9 +28,9 @@ std::string append(std::string a, std::string b) {
 }
 
 int main() {
-    RpcServer server(23333);
-    server.registerMethod("add", add);
-    server.registerMethod("append", append);
+    Rpc_Server server(23333);
+    server.register_method("add", add);
+    server.register_method("append", append);
     server.run();
     return 0;
 }
@@ -40,7 +40,7 @@ RPCClient
 
 ```cpp
 int main() {
-    RpcClient client("127.0.0.1", 23333);
+    Rpc_Client client("127.0.0.1", 23333);
     client.run();
     int res = client.call<int>("add", 1, 2);
     std::cerr << "res : " << res << std::endl;
@@ -75,8 +75,8 @@ myClass add4(myClass a, myClass b) {
 }
 
 int main() {
-    RpcServer server(23333);
-    server.registerMethod("add4", add4);
+    Rpc_Server server(23333);
+    server.register_method("add4", add4);
     server.run();
     return 0;
 }
@@ -99,7 +99,7 @@ public:
 };
 
 int main() {
-    RpcClient client("127.0.0.1", 23333);
+    Rpc_Client client("127.0.0.1", 23333);
     client.run();
     myClass a, b;
     a.a = 10;
@@ -109,7 +109,7 @@ int main() {
     auto ret = client.call<myClass>("add4", a, b);
     std::cout << ret.a << " " << ret.b << std::endl;
     while(1) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     return 0;
 }
@@ -122,10 +122,10 @@ RPCServer
 
 ```cpp
 int main () {
-    RpcServer server(23333);
+    Rpc_Server server(23333);
     // 设置服务器的压缩算法
-    server.set_compress_algo(CompressionType::Brotli);  // 使用Brotli算法压缩数据
-    server.registerMethod("add", add);
+    server.set_compress_algo(Compression_Type::Brotli);  // 使用Brotli算法压缩数据
+    server.register_method("add", add);
     server.run();
     return 0;
 }
@@ -135,9 +135,9 @@ RPCClient
 
 ```cpp
 int main() {
-    RpcClient client("127.0.0.1", 23333);
+    Rpc_Client client("127.0.0.1", 23333);
     // 设置客户端的压缩算法
-    client.set_compress_algo(CompressionType::Brotli);
+    client.set_compress_algo(Compression_Type::Brotli);
     client.run();
     int res = client.call<int>("add", 1, 2);
     std::cerr << "res : " << res << std::endl;
@@ -163,9 +163,9 @@ private:
 };
 
 int main {
-    RpcServer server(23333);
+    Rpc_Server server(23333);
     Generator gen;
-    server.registerMethod("requestID", [&](){
+    server.register_method("requestID", [&]() {
         return gen.get_new_id();
     });
     server.run();
@@ -177,7 +177,7 @@ RPCClient
 
 ```cpp
 int main {
-    RpcClient client("127.0.0.1", 23333);
+    Rpc_Client client("127.0.0.1", 23333);
     client.run();
     while(1) {
         std::cout << client.call<int32_t>("requestID") << std::endl;
