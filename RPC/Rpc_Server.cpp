@@ -83,6 +83,14 @@ void Rpc_Server::set_compress_algo(Compression_Type type) {
     this->_compressionType = type;
 }
 
+Thread_Pool& Rpc_Server::get_thread_pool() {
+    return *this->_threadPool;
+}
+
+Timer& Rpc_Server::get_timer() {
+    return this->_timer;
+}
+
 void Rpc_Server::handle_heartbeat_signal() {
     std::clog << "收到一个心跳信息" << std::endl;
 }

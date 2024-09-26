@@ -32,6 +32,10 @@ public:
 
     void set_compress_algo(Compression_Type type);
 
+    Thread_Pool& get_thread_pool();
+
+    Timer& get_timer();
+
 private:
 
     void heartbeat_signal();

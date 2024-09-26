@@ -52,6 +52,14 @@ void Rpc_Client::set_compress_algo(Compression_Type type) {
     this->_compressionType = type;
 }
 
+Thread_Pool & Rpc_Client::get_thread_pool() {
+    return *this->_thread_pool;
+}
+
+Timer & Rpc_Client::get_timer() {
+    return this->_timer;
+}
+
 void Rpc_Client::heartbeat_signal() {
     this->call<void>(HEARTBEAT_SIG);
 }
